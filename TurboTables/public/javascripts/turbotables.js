@@ -359,10 +359,7 @@ TurboTablesLib.prototype.JumpPage = function () {
      var lastPage = 0, jumpPage = 1;
      var input = document.getElementById(this.jumpInputId);
 
-     if (input.value === "") {
-          input.value = 1;
-     }
-     else {
+     if (input.value !== "") {
           jumpPage = parseInt(input.value, 10);
 
           var remainder = this.totalItems % this.pageSize;
@@ -381,10 +378,9 @@ TurboTablesLib.prototype.JumpPage = function () {
           this.showSpinner(true);
           //Call data binding
           this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
-
-          input.value = this.page;
      }
-
+     
+	 input.value = this.page;
 };
 
 //Move to next display page
@@ -466,6 +462,8 @@ TurboTablesLib.prototype.UpdatePagerControls = function() {
           document.getElementById(this.nextButtonId).className = 'btn btn-default disabled';
           document.getElementById(this.lastButtonId).className = 'btn btn-default disabled';
      }
+	 
+	 document.getElementById(this.jumpInputId).value = this.page;
 };
 
 //show page number
