@@ -24,6 +24,7 @@
 //   ShowTableInfo()
 //   FilterTable()
 //   ProcessSortEvent(id)
+//   ToggleFilterRow()
 
 //Define constructor for TurboTables Library
 function TurboTablesLib(options) {
@@ -41,13 +42,21 @@ function TurboTablesLib(options) {
      this.pagerSizeOptions = [];
      this.sortColumn = 'Id';
      this.sortDirection = 'asc';
+     this.filterProperty;
      this.filterPropertyValue;
+     this.searchPropertyValue;
      this.columnHeaderClass = 'colHeaders';
      this.spinnerSource = '/images/spinner.gif';
      this.totalItemsAttribute = '';
      this.totalItems = 0;
      this.tableInfoId = 'showing';
-     this.filterInputId = 'filter';
+     this.filterId = 'filter';
+     this.filterIconId = 'filterIcon';
+     this.filterValueInputId = 'filterValueInput';
+     this.clearFilterButtonId = 'clearFilterButtonId';
+     this.filterButtonId = 'filterButtonId';
+     this.selectFilterFieldId = 'selectFilterField';
+     this.searchInputId = 'search';
      this.selectPgSizerId = 'pageSize';
      this.tableInfoTemplate = 'Showing {0} to {1} of {2} entries';
      this.firstButtonId = 'first';
@@ -81,14 +90,14 @@ function TurboTablesLib(options) {
      //Retrieve total items from table (perhaps needs more error checking)
      this.totalItems = parseInt(document.getElementById(this.tableId).getAttribute(this.totalItemsAttribute), 10);
 
-     //Add Showing and Filter row and functionality
-     this.CreateFilterRow(this.tableId);
+     //Add Showing, Search, and Filter row and functionality
+     this.CreateSearchAndFilterRows(this.tableId);
 
      //Add Paging controls and PageSizer control
      this.CreatePagingControls(this.tableId);
 
      //Hook events for row sorting
-     this.EnableRowSorting(this.tableId);
+     this.EnableColumnSortingAndFiltering(this.tableId);
 
      //Add spinner
      this.AddSpinner(this.tableId);
@@ -140,50 +149,112 @@ TurboTablesLib.prototype.showSpinner = function (show) {
 };
 //Create 'private' Helper functions
 
-//Create the Filter Row elements (Table info and filter input) above the table
-TurboTablesLib.prototype.CreateFilterRow = function (tableId) {
+//Create the Search and Filter Row elements (Table info, search input, and filter input) above the table
+TurboTablesLib.prototype.CreateSearchAndFilterRows = function (tableId) {
 
-     //Create elements in the filter row
-     var filterNode = document.createElement('div');
-     filterNode.className = 'row';
+     //Create elements in the search row
+     var searchNode = document.createElement('div');
+     searchNode.className = 'row';
      var formNode = document.createElement('form');
      formNode.className = 'form-inline';
+
+     var filterIconNode = document.createElement('a');
+     filterIconNode.innerHTML = '<i class="fa fa-filter fa-2x"></i>';
+     filterIconNode.id = this.filterIconId;
+     filterIconNode.href = '#';
 
      var showingLabelNode = document.createElement('label');
      showingLabelNode.innerHTML = this.tableInfoTemplate;
      showingLabelNode.id = this.tableInfoId;
      var infoNode = document.createElement('div');
-     infoNode.className = 'col-sm-5 table-info';
+     infoNode.className = 'col-sm-4 table-info';
+     infoNode.appendChild(filterIconNode);
      infoNode.appendChild(showingLabelNode);
-     formNode.appendChild(infoNode)
-
-     var filterLabelNode = document.createElement('label');
-     filterLabelNode.innerHTML = 'Filter:';
-     var filterInputNode = document.createElement('input');
-     filterInputNode.id = this.filterInputId;
-     filterInputNode.setAttribute('type', 'search');
-     filterInputNode.className= 'form-control input-sm';
-     var filterDivNode = document.createElement('div');
-     filterDivNode.className = 'col-sm-7 table-filter';
-     filterDivNode.appendChild(filterLabelNode);
-     filterDivNode.appendChild(filterInputNode);
-     formNode.appendChild(filterDivNode);
+     formNode.appendChild(infoNode);
+ 
+     var searchLabelNode = document.createElement('label');
+     searchLabelNode.innerHTML = 'Search:';
+     var searchInputNode = document.createElement('input');
+     searchInputNode.id = this.searchInputId;
+     searchInputNode.setAttribute('type', 'search');
+     searchInputNode.className= 'form-control input-sm';
+     var searchDivNode = document.createElement('div');
+     searchDivNode.className = 'col-sm-7 table-search';
+     searchDivNode.appendChild(searchLabelNode);
+     searchDivNode.appendChild(searchInputNode);
+     formNode.appendChild(searchDivNode);
       
-     filterNode.appendChild(formNode);
+     searchNode.appendChild(formNode);
      var insertPosition = document.getElementById(tableId).parentNode.parentNode;
-     insertPosition.parentNode.insertBefore(filterNode, insertPosition);
+     insertPosition.parentNode.insertBefore(searchNode, insertPosition);
 
      var self = this;
-     //Hook events for filter
-     filterInputNode.addEventListener("keyup", function () {
-          self.FilterTable();
+     //Hook events for filter icon
+     filterIconNode.addEventListener("click", function () {
+          self.ToggleFilterRow();
      });
-     filterInputNode.onmouseover = function () {
-          filterInputNode.setAttribute('cursor', 'pointer');
+
+     //Hook events for search
+     searchInputNode.addEventListener("keyup", function () {
+          self.SearchTable();
+     });
+     searchInputNode.onmouseover = function () {
+          searchInputNode.setAttribute('cursor', 'pointer');
      };
-     filterInputNode.onmouseleave = function () {
-          filterInputNode.setAttribute('cursor', 'auto');
+     searchInputNode.onmouseleave = function () {
+          searchInputNode.setAttribute('cursor', 'auto');
      };
+
+     //
+     //Create elements in the filter row
+     var filterNode = document.createElement('div');
+     filterNode.className = 'row';
+     formNode = document.createElement('form');
+     formNode.className = 'form-inline';
+
+     var filterSelectLabelNode = document.createElement('label');
+     filterSelectLabelNode.innerHTML = 'Field:';
+     var selectFilterFieldNode = document.createElement('select');
+     selectFilterFieldNode.className = 'input-sm ';
+     selectFilterFieldNode.id = this.selectFilterFieldId;
+     selectFilterFieldNode.setAttribute('name', 'selectFilterField');
+
+     var filterValueLabelNode = document.createElement('label');
+     filterValueLabelNode.innerHTML = 'Value:';
+     var filterValueInputNode = document.createElement('input');
+     filterValueInputNode.id = this.filterValueInputId;
+     filterValueInputNode.setAttribute('type', 'text');
+     filterValueInputNode.className = 'input-sm form-control';
+     var clearFilterButtonNode = document.createElement('a');
+     clearFilterButtonNode.innerHTML = 'Clear';
+     clearFilterButtonNode.id = this.clearFilterButtonId;
+     clearFilterButtonNode.href = '#';
+     clearFilterButtonNode.className = 'table-filter-button input-sm btn btn-primary';
+     var filterButtonNode = document.createElement('a');
+     filterButtonNode.innerHTML = 'Filter';
+     filterButtonNode.id = this.filterButtonId;
+     filterButtonNode.href = '#';
+     filterButtonNode.className = 'table-filter-button input-sm btn btn-primary';
+
+     var filterDivNode = document.createElement('div');
+     filterDivNode.id = this.filterId;
+     filterDivNode.className = 'col-sm-6 table-filter';
+     filterDivNode.appendChild(filterSelectLabelNode);
+     filterDivNode.appendChild(selectFilterFieldNode);
+     filterDivNode.appendChild(filterValueLabelNode);
+     filterDivNode.appendChild(filterValueInputNode);
+     filterDivNode.appendChild(clearFilterButtonNode);
+     filterDivNode.appendChild(filterButtonNode);
+     formNode.appendChild(filterDivNode);
+
+     filterNode.appendChild(formNode);
+     insertPosition = document.getElementById(tableId).parentNode.parentNode;
+     insertPosition.parentNode.insertBefore(filterNode, insertPosition);
+
+     //Hook events for filter
+     filterButtonNode.addEventListener('click', function () { self.FilterQuery(); });
+     clearFilterButtonNode.addEventListener('click', function () { self.ClearFilterQuery(); });
+
 };
 
 //Add the Spinner element above the table
@@ -204,7 +275,7 @@ TurboTablesLib.prototype.AddSpinner = function (tableId) {
      insertPosition.parentNode.insertBefore(spinnerNode, insertPosition);
 };
 
-TurboTablesLib.prototype.EnableRowSorting = function (tableId) {
+TurboTablesLib.prototype.EnableColumnSortingAndFiltering = function (tableId) {
      //throw 'Not implemented exception';
      var self = this;
 
@@ -212,6 +283,11 @@ TurboTablesLib.prototype.EnableRowSorting = function (tableId) {
      var thead = document.getElementById(tableId).getElementsByTagName('thead');
      var colRows = thead[0].getElementsByTagName('tr');
      var colHeaders = colRows[0].getElementsByTagName('th');
+     //Defaul the first selection object to empty
+     var option = document.createElement('option');
+     option.text = "";
+     option.value = "";
+     document.getElementById(this.selectFilterFieldId).appendChild(option);
 
      for (var idx = 0; idx < colHeaders.length; idx++) {
           //If sorting specified for the column, then hook the click event
@@ -220,6 +296,14 @@ TurboTablesLib.prototype.EnableRowSorting = function (tableId) {
                     self.ProcessSortEvent(this.id);
                });
           };
+          // If the column / field is filterable, then add to the select list
+          if (colHeaders[idx].className.indexOf('filterable') !== -1) {
+               option = document.createElement('option');
+               option.text = colHeaders[idx].id;
+               option.value = colHeaders[idx].id;
+               document.getElementById(this.selectFilterFieldId).appendChild(option);
+          }
+
      };
 };
 
@@ -420,6 +504,33 @@ TurboTablesLib.prototype.LastPage = function () {
      this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
 };
 
+//Clear the filter column and value
+TurboTablesLib.prototype.ClearFilterQuery = function () {
+     this.filterProperty = "";
+     this.filterPropertyValue = "";
+     document.getElementById(this.selectFilterFieldId).selectedIndex = 0;
+     document.getElementById(this.filterValueInputId).value = "";
+};
+//Query using the filter column and value
+TurboTablesLib.prototype.FilterQuery = function () {
+
+     var filterSelectElem;
+     var found = false;
+
+     filterSelectElem = document.getElementById(this.selectFilterFieldId);
+     this.filterProperty = filterSelectElem.options[filterSelectElem.selectedIndex].value;
+     this.filterPropertyValue = document.getElementById(this.filterValueInputId).value;
+
+     if (this.filterPropertyValue.length > 0) {
+          //Start the spinner
+          this.showSpinner(true);
+
+          //call data binding
+          this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterProperty, this.filterPropertyValue);
+          this.ShowTableInfo();
+     }
+};
+
 //UpdatePageSize
 TurboTablesLib.prototype.UpdatePageSize = function () {
     var result = 1;
@@ -434,7 +545,7 @@ TurboTablesLib.prototype.UpdatePageSize = function () {
     //Start the spinner
     this.showSpinner(true);
     //call data binding
-    this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
+    this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterProperty, this.filterPropertyValue);
     this.ShowTableInfo();
 };
 
@@ -484,12 +595,12 @@ TurboTablesLib.prototype.ShowTableInfo = function () {
      this.UpdatePagerControls();
 };
 
-TurboTablesLib.prototype.FilterTable = function () {
-     var input, filter, tableBody, rows, rowData, rowIdx, dataIdx;
+TurboTablesLib.prototype.SearchTable = function () {
+     var input, search, tableBody, rows, rowData, rowIdx, dataIdx;
      var found = false;
 
-     input = document.getElementById(this.filterInputId);
-     filter = input.value.toUpperCase();
+     input = document.getElementById(this.searchInputId);
+     search = input.value.toUpperCase();
      //really need body reference
      tableBody = document.getElementById(this.tableId).getElementsByTagName('tbody');
      rows = tableBody[0].getElementsByTagName('tr');
@@ -497,7 +608,7 @@ TurboTablesLib.prototype.FilterTable = function () {
      for (var rowIdx = 0; rowIdx < rows.length; rowIdx++) {
           rowData = rows[rowIdx].getElementsByTagName('td');
           for (var dataIdx = 0; dataIdx < rowData.length; dataIdx++) {
-               if (rowData[dataIdx].innerHTML.toUpperCase().indexOf(filter) > -1) {
+               if (rowData[dataIdx].innerHTML.toUpperCase().indexOf(search) > -1) {
                     found = true;
                     break;
                };
@@ -539,5 +650,19 @@ TurboTablesLib.prototype.ProcessSortEvent = function (id) {
      //Start the spinner
      this.showSpinner(true);
      //call data binding
-     this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
+     this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterProperty, this.filterPropertyValue);
+};
+
+TurboTablesLib.prototype.ToggleFilterRow = function () {
+     var filterRow = document.getElementById(this.filterId);
+     if (filterRow.style.display === 'none')
+          filterRow.style.display = 'block';
+     else {
+          filterRow.style.display = 'none';
+          this.filterProperty = "";
+          this.filterPropertyValue = "";
+          document.getElementById(this.selectFilterFieldId).selectedIndex = 0;
+          document.getElementById(this.filterValueInputId).value = "";
+
+     }
 };

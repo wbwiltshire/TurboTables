@@ -6,6 +6,7 @@
     <Name>ExpressHBSRESTStarter</Name>
     <RootNamespace>ExpressHBSRESTStarter</RootNamespace>
     <LastActiveSolutionConfig>Debug|Any CPU</LastActiveSolutionConfig>
+    <SaveNodeJsSettingsInProjectFile>True</SaveNodeJsSettingsInProjectFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -51,6 +52,7 @@
     <Content Include="public\stylesheets\site.css" />
     <Compile Include="routes\about.js" />
     <Content Include="public\stylesheets\turbotables.css" />
+    <Content Include="run.cmd" />
     <Content Include="views\pager.hbs" />
     <Content Include="views\customeradd.hbs" />
     <Content Include="views\customerdetail.hbs" />

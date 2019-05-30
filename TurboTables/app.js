@@ -89,10 +89,37 @@ app.use(function (err, req, res, next) {
 });
 
 //Start server
-app.set('port', process.env.PORT);
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+//app.set('port', process.env.PORT);
 http.createServer(app).listen(app.get('port'), function () {
 });
 
 console.log('Express server listening on port: ' + app.get('port'));
 
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+     var port = parseInt(val, 10);
+
+     if (isNaN(port)) {
+          // named pipe
+          return val;
+     }
+
+     if (port >= 0) {
+          // port number
+          return port;
+     }
+
+     return false;
+}
 module.exports = app;

@@ -3,6 +3,7 @@
      findAllCustomers: FindAllCustomers,
      findAllCustomersPaged: FindAllCustomersPaged,
      findAllCustomersPagedByOrder: FindAllCustomersPagedByOrder,
+     findCustomersPaged: FindCustomersPaged,
      findCustomerById: FindCustomerById,
      addCustomer: AddCustomer
 }
@@ -62,6 +63,55 @@ function FindAllCustomersPagedByOrder(page, pageSize, orderBy, direction) {
      }
      return { customers: customerPage, totalItems: customers.length };
 };
+
+function FindCustomersPaged(page, pageSize, fieldProperty, fieldValue) {
+     var customerPage = [];
+     var itemCount = 0;
+     var idx = 0;
+     switch (fieldProperty.trim()) {
+          case 'ID':
+               for (idx = 0; idx < customers.length; idx++) {
+                    if (customers[idx].Id === parseInt(fieldValue, 10)) {
+                         customerPage.push(customers[idx]);
+                         itemCount++;
+                         break;
+                    }
+               }               
+               break;
+          case 'FirstName':
+               for (idx = 0; idx < customers.length; idx++) {
+                    if (customers[idx].FirstName.trim() === fieldValue.trim()) {
+                         customerPage.push(customers[idx]);
+                         itemCount++;
+                         break;
+                    }
+               }               
+               break;
+          case 'LastName':
+               for (idx = 0; idx < customers.length; idx++) {
+                    if (customers[idx].LastName.trim() === fieldValue.trim()) {
+                         customerPage.push(customers[idx]);
+                         itemCount++;
+                         break;
+                    }
+               }               
+               break;
+          case 'EMail':
+               for (idx = 0; idx < customers.length; idx++) {
+                    if (customers[idx].EMail.trim() === fieldValue.trim()) {
+                         customerPage.push(customers[idx]);
+                         itemCount++;
+                         break;
+                    }
+               }               
+               break;
+          default:
+               //
+               break;
+     }
+
+     return { customers: customerPage, totalItems: itemCount }; 
+}
 
 function FindCustomerById(id) {
      var customer = null;

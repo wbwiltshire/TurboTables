@@ -11,6 +11,13 @@
      z-index: 1;
 }
 .table-filter {
+     display: none;
+     float: left;
+}
+.table-filter-button {
+     float: right;
+}
+.table-search {
      float: right;
      text-align: right;
 }
