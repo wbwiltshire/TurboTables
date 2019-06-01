@@ -1,14 +1,10 @@
-/***************************************/
-/* TurboTables                         */
-/***************************************/
-.spinner {
-     display: none;
-     top: 30%;
-     left: 30%;
-     width: 300px;
-     height: 200px;
-     position: fixed;
-     z-index: 1;
+﻿.bg-cover {
+    background: url(../images/LinksysRouter.jpg);
+    height: 400px;
+    background-size:cover;
+}
+.text-normal {
+    font-weight: normal;
 }
 .table-filter {
      display: none;
@@ -30,4 +26,7 @@
 }
 .input-xs {
      max-width: 60px;
+}
+.filter-grp {
+     float: right;
 }

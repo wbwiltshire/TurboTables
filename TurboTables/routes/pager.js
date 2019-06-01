@@ -19,7 +19,7 @@ router.get('/', function (req, res, next) {
      );
      //Call customer REST service
      request(options, function (error, response, body) {
-          if (!error && response.statusCode == 200) {
+          if (!error && response.statusCode === 200) {
                var json = JSON.parse(body);
                res.render('pager', { title: 'Paged Customer List', customers: json });
           }
