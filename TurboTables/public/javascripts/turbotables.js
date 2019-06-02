@@ -142,6 +142,18 @@ TurboTablesLib.prototype.getSortDirection = function () {
      return this.sortDirection;
 };
 
+TurboTablesLib.prototype.getFilterColumn = function () {
+     var filterSelectElem = document.getElementById(this.selectFilterColumnId);
+     this.filterColumn = filterSelectElem.options[filterSelectElem.selectedIndex].value;
+
+     return this.filterColumn;
+};
+
+TurboTablesLib.prototype.getFilterValue = function () {
+     this.filterValue = document.getElementById(this.filterValueInputId).value;
+     return this.filterValue;
+};
+
 //Show / Hide waiting data spinner
 TurboTablesLib.prototype.showSpinner = function (show) {
      if (show)
@@ -453,11 +465,10 @@ TurboTablesLib.prototype.FilterQuery = function () {
      var filterSelectElem;
      var found = false;
 
-     filterSelectElem = document.getElementById(this.selectFilterFieldId);
-     this.filterColumn = filterSelectElem.options[filterSelectElem.selectedIndex].value;
-     this.filterValue = document.getElementById(this.filterValueInputId).value;
+     this.filterColumn = this.getFilterColumn();
+     this.filterValue = this.getFilterValue();
 
-     if (this.filterValue.length > 0) {
+     if ((this.filterValue.length > 0) && (this.filterColumn.length > 0)) {
           //Start the spinner
           this.showSpinner(true);
 

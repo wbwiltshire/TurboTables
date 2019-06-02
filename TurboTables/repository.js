@@ -64,16 +64,24 @@ function FindAllCustomersPagedByOrder(page, pageSize, orderBy, direction) {
      return { customers: customerPage, totalItems: customers.length };
 };
 
-function FindCustomersPaged(page, pageSize, fieldProperty, fieldValue) {
+function FindCustomersPaged(page, pageSize, orderBy, direction, fieldProperty, fieldValue) {
+     var results = [];
      var customerPage = [];
      var itemCount = 0;
      var idx = 0;
+     var intPage = parseInt(page, 10);
+     var intPageSize = parseInt(pageSize, 10);
+     if (intPageSize > customers.length)
+          intPageSize = customers.length;
+     var start = (intPage - 1) * intPageSize;
+
+     customers = lodash.orderBy(customers, [orderBy], [direction]);
+
      switch (fieldProperty.trim()) {
-          case 'ID':
+          case 'Id':
                for (idx = 0; idx < customers.length; idx++) {
                     if (customers[idx].Id === parseInt(fieldValue, 10)) {
-                         customerPage.push(customers[idx]);
-                         itemCount++;
+                         results.push(customers[idx]);
                          break;
                     }
                }               
@@ -81,36 +89,42 @@ function FindCustomersPaged(page, pageSize, fieldProperty, fieldValue) {
           case 'FirstName':
                for (idx = 0; idx < customers.length; idx++) {
                     if (customers[idx].FirstName.trim() === fieldValue.trim()) {
-                         customerPage.push(customers[idx]);
-                         itemCount++;
-                         break;
+                         results.push(customers[idx]);
                     }
                }               
                break;
           case 'LastName':
                for (idx = 0; idx < customers.length; idx++) {
                     if (customers[idx].LastName.trim() === fieldValue.trim()) {
-                         customerPage.push(customers[idx]);
-                         itemCount++;
-                         break;
+                         results.push(customers[idx]);
                     }
                }               
                break;
           case 'EMail':
+               var email = '';
                for (idx = 0; idx < customers.length; idx++) {
-                    if (customers[idx].EMail.trim() === fieldValue.trim()) {
-                         customerPage.push(customers[idx]);
-                         itemCount++;
-                         break;
+                    email = customers[idx].EMail;
+                    if (email.indexOf(fieldValue.trim()) >= 0) {
+                         results.push(customers[idx]);
                     }
                }               
                break;
           default:
                //
+               console.log('Invalid select column:' + fieldProperty.trim());
                break;
      }
 
-     return { customers: customerPage, totalItems: itemCount }; 
+     itemCount = start + intPageSize;
+     if (itemCount > results.length)
+          itemCount = results.length;
+
+     if (start > -1) {
+          for (idx = start; idx < itemCount; idx++)
+               customerPage.push(results[idx]);
+     }
+
+     return { customers: customerPage, totalItems: results.length }; 
 }
 
 function FindCustomerById(id) {

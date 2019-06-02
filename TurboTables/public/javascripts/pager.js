@@ -16,7 +16,7 @@ $(document).ready(function () {
      customerTable.setDataBinding(CustomerList);
 
      $('#refresh').click(function () {
-          CustomerList(customerTable.getPage(), customerTable.getPageSize(), customerTable.getSortColumn(), customerTable.getSortDirection(), null, null);
+          CustomerList(customerTable.getPage(), customerTable.getPageSize(), customerTable.getSortColumn(), customerTable.getSortDirection(), customerTable.getFilterColumn(), customerTable.getFilterValue());
      });
 
      function CustomerList(page, pageSize, sortColumn, direction, filterColumn, filterValue) {

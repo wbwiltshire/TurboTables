@@ -17,8 +17,8 @@ router.get('/', function (req, res) {
      else {
           //simulate network delay
           setTimeout(function () {
-               if (query.filterColumn)
-                    res.send(repo.findCustomersPaged(query.page, query.pageSize, query.filterColumn, query.filterValue));
+               if (query.filterColumn && query.filterValue)
+                    res.send(repo.findCustomersPaged(query.page, query.pageSize, query.sortColumn, query.direction, query.filterColumn, query.filterValue));
                else if (query.sortColumn)
                     res.send(repo.findAllCustomersPagedByOrder(query.page, query.pageSize, query.sortColumn, query.direction));
                else
