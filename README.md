@@ -21,17 +21,18 @@ For more informaton:
   * Add <b>ctTotalItems</b> attribute to the <b>table</b> tag
   * Add <b>colHeaders</b> class to <b>tr</b> tag in the table
   * Add <b>sortable</b> to the table header columns <b>class</b> on which you want to sort
-  * Additionally, the column header must have an <b>id</b> attribute to be sortable
+  * Add <b>filterable</b> to the table header columns <b>class</b> on which you want to filter
+  * Additionally, the column header must have an <b>id</b> attribute to be sortable/filterable
 ```html
 <div class="row">
     <div class="col-md-12">
         <table id="CustomerTable" ctTotalItems="100" class=”table table-striped tabled-bordered table-condensed table-hover”>
             <thead>
                 <tr class="colHeaders">
-                    <th id="Id" class="sortable"> <a href="#">ID</a></th>
-                    <th id="FirstName" class="sortable"><a href="#">First Name</a></th>
-                    <th id="LastName" class="sortable"> <a href="#">Last Name</a></th>
-                    <th id="Email" class="sortable"><a href="#">E-Mail</a></th>
+                    <th id="Id" class="sortable filterable"> <a href="#">Id</a></th>
+                    <th id="FirstName" class="sortable filterable"><a href="#">First Name</a></th>
+                    <th id="LastName" class="sortable filterable"> <a href="#">Last Name</a></th>
+                    <th id="Email" class="sortable filterable"><a href="#">E-Mail</a></th>
                 </tr>
             </thead>
             <tbody id="CustomerList">
@@ -62,13 +63,13 @@ customerTable.setDataBinding(CustomerList);
   * Update refresh logic
 ```js
      $('#refresh').click(function () {
-          CustomerList(customerTable.getPage(), customerTable.getPageSize(), customerTable.getSortColumn(), customerTable.getSortDirection());
+          CustomerList(customerTable.getPage(), customerTable.getPageSize(), customerTable.getSortColumn(), customerTable.getSortDirection(), customerTable.getFilterColumn(), customerTable.getFilterValue());
      });
 ```
   * Update REST service call
 ```js
      function CustomerList(page, pageSize, sortColumn, direction) {
-        var requestString = '?page=' + page + '&pageSize=' + pageSize + '&sortColumn=' + sortColumn + '&direction=' + direction;
+        var requestString = '?page=' + page + '&pageSize=' + pageSize + '&sortColumn=' + sortColumn + '&direction=' + direction + '&filterColumn=' + filterColumn + '&filterValue=' + filterValue;
         var url = baseUrl + 'customer/' + requestString;		
 ...
 ...
