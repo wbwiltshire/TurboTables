@@ -24,6 +24,10 @@
 //   ShowTableInfo()
 //   FilterTable()
 //   ProcessSortEvent(id)
+//   ToggleFilterRow()
+//   CreateAnchorElement(options)
+//   CreateLabelElement(options)
+//   CreateButtonElement(options)
 
 //Define constructor for TurboTables Library
 function TurboTablesLib(options) {
@@ -41,13 +45,21 @@ function TurboTablesLib(options) {
      this.pagerSizeOptions = [];
      this.sortColumn = 'Id';
      this.sortDirection = 'asc';
-     this.filterPropertyValue;
+     this.filterColumn = '';
+     this.filterValue = '';
+     this.searchPropertyValue;
      this.columnHeaderClass = 'colHeaders';
      this.spinnerSource = '/images/spinner.gif';
      this.totalItemsAttribute = '';
      this.totalItems = 0;
      this.tableInfoId = 'showing';
-     this.filterInputId = 'filter';
+     this.filterId = 'filter';
+     this.filterIconId = 'filterIcon';
+     this.filterValueInputId = 'filterValueInput';
+     this.clearFilterButtonId = 'clearFilterButtonId';
+     this.filterFilterButtonId = 'filterFilterButtonId';
+     this.selectFilterColumnId = 'filterSelectColumn';
+     this.searchInputId = 'search';
      this.selectPgSizerId = 'pageSize';
      this.tableInfoTemplate = 'Showing {0} to {1} of {2} entries';
      this.firstButtonId = 'first';
@@ -81,14 +93,14 @@ function TurboTablesLib(options) {
      //Retrieve total items from table (perhaps needs more error checking)
      this.totalItems = parseInt(document.getElementById(this.tableId).getAttribute(this.totalItemsAttribute), 10);
 
-     //Add Showing and Filter row and functionality
-     this.CreateFilterRow(this.tableId);
+     //Add Showing, Search, and Filter row and functionality
+     this.CreateSearchAndFilterRows(this.tableId);
 
      //Add Paging controls and PageSizer control
      this.CreatePagingControls(this.tableId);
 
      //Hook events for row sorting
-     this.EnableRowSorting(this.tableId);
+     this.EnableColumnSortingAndFiltering(this.tableId);
 
      //Add spinner
      this.AddSpinner(this.tableId);
@@ -130,6 +142,18 @@ TurboTablesLib.prototype.getSortDirection = function () {
      return this.sortDirection;
 };
 
+TurboTablesLib.prototype.getFilterColumn = function () {
+     var filterSelectElem = document.getElementById(this.selectFilterColumnId);
+     this.filterColumn = filterSelectElem.options[filterSelectElem.selectedIndex].value;
+
+     return this.filterColumn;
+};
+
+TurboTablesLib.prototype.getFilterValue = function () {
+     this.filterValue = document.getElementById(this.filterValueInputId).value;
+     return this.filterValue;
+};
+
 //Show / Hide waiting data spinner
 TurboTablesLib.prototype.showSpinner = function (show) {
      if (show)
@@ -140,50 +164,83 @@ TurboTablesLib.prototype.showSpinner = function (show) {
 };
 //Create 'private' Helper functions
 
-//Create the Filter Row elements (Table info and filter input) above the table
-TurboTablesLib.prototype.CreateFilterRow = function (tableId) {
+//Create the Search and Filter Row elements (Table info, search input, and filter input) above the table
+TurboTablesLib.prototype.CreateSearchAndFilterRows = function (tableId) {
 
-     //Create elements in the filter row
-     var filterNode = document.createElement('div');
-     filterNode.className = 'row';
-     var formNode = document.createElement('form');
-     formNode.className = 'form-inline';
+     //Create elements in the search row
+     var searchNode = document.createElement('div'); searchNode.className = 'row';
 
-     var showingLabelNode = document.createElement('label');
-     showingLabelNode.innerHTML = this.tableInfoTemplate;
-     showingLabelNode.id = this.tableInfoId;
-     var infoNode = document.createElement('div');
-     infoNode.className = 'col-sm-5 table-info';
+     var filterIconNode = this.CreateElement({ type: 'a', id: this.filterIconId, href: '#', html: '<i class="fa fa-filter fa-2x"></i>' });
+     var showingLabelNode = this.CreateElement({ type: 'label', className: 'col-sm-10', id: this.tableInfoId, html: this.tableInfoTemplate });
+     var infoNode = document.createElement('div'); infoNode.className = 'col-sm-4';
+     infoNode.appendChild(filterIconNode);
      infoNode.appendChild(showingLabelNode);
-     formNode.appendChild(infoNode)
+     searchNode.appendChild(infoNode);
 
-     var filterLabelNode = document.createElement('label');
-     filterLabelNode.innerHTML = 'Filter:';
-     var filterInputNode = document.createElement('input');
-     filterInputNode.id = this.filterInputId;
-     filterInputNode.setAttribute('type', 'search');
-     filterInputNode.className= 'form-control input-sm';
-     var filterDivNode = document.createElement('div');
-     filterDivNode.className = 'col-sm-7 table-filter';
-     filterDivNode.appendChild(filterLabelNode);
-     filterDivNode.appendChild(filterInputNode);
-     formNode.appendChild(filterDivNode);
-      
-     filterNode.appendChild(formNode);
+     var formNode = this.CreateElement({ type: 'form', className: 'col-sm-8', action: '#' });
+     var formGroupNode = document.createElement('div'); formGroupNode.className = 'form-group row float-right';
+     var inputGroupNode = document.createElement('div'); inputGroupNode.className = 'input-group mb-3';
+     var searchInputNode = this.CreateElement({ type: 'input', className: 'form-control-sm', id: this.searchInputId, inputType: 'search', placeholder: 'Search' });
+
+     inputGroupNode.appendChild(searchInputNode);
+     formGroupNode.appendChild(inputGroupNode);
+     formNode.appendChild(formGroupNode);
+
+     searchNode.appendChild(formNode);
      var insertPosition = document.getElementById(tableId).parentNode.parentNode;
-     insertPosition.parentNode.insertBefore(filterNode, insertPosition);
+     insertPosition.parentNode.insertBefore(searchNode, insertPosition);
 
      var self = this;
-     //Hook events for filter
-     filterInputNode.addEventListener("keyup", function () {
-          self.FilterTable();
+     //Hook events for filter icon
+     filterIconNode.addEventListener("click", function () {
+          self.ToggleFilterRow();
      });
-     filterInputNode.onmouseover = function () {
-          filterInputNode.setAttribute('cursor', 'pointer');
+
+     //Hook events for search
+     searchInputNode.addEventListener("keyup", function () {
+          self.SearchTable();
+     });
+     searchInputNode.onmouseover = function () {
+          searchInputNode.setAttribute('cursor', 'pointer');
      };
-     filterInputNode.onmouseleave = function () {
-          filterInputNode.setAttribute('cursor', 'auto');
+     searchInputNode.onmouseleave = function () {
+          searchInputNode.setAttribute('cursor', 'auto');
      };
+
+     //
+     //Create elements in the filter row
+     var filterNode = document.createElement('div'); filterNode.className = 'row';
+     filterNode.id = this.filterId; filterNode.style.display = 'none';
+
+     //Create Column Select
+     var filterColumnFormGroup = document.createElement('div'); filterColumnFormGroup.className = 'form-group col-sm-3';
+     var filterColumnSelect = document.createElement('select'); filterColumnSelect.className = 'form-control'; filterColumnSelect.id = this.selectFilterColumnId;
+     filterColumnFormGroup.appendChild(filterColumnSelect);
+
+     //Create Column Value
+     var filterInputFormGroupNode = document.createElement('div'); filterInputFormGroupNode.className = 'form-group row col-sm-3';
+     var filterInputGroupNode = document.createElement('div'); filterInputGroupNode.className = 'input-group col-sm-12';
+     var filterValueInputNode = this.CreateElement({ type: 'input', className: 'form-control col-sm-12', id: this.filterValueInputId, placeholder: 'Value', inputType: 'text' });
+     filterInputGroupNode.appendChild(filterValueInputNode);
+     filterInputFormGroupNode.appendChild(filterInputGroupNode);
+
+     //Create Clear and Filter buttons
+     var filterButtonGroup = document.createElement('div'); filterButtonGroup.className = 'filter-grp col-sm-4';
+     var clearFilterButtonNode = this.CreateElement({ type: 'a', className: 'btn btn-primary', id: this.clearFilterButtonId, html: 'Clear', href: '#'});
+     var filterFilterButtonNode = this.CreateElement({ type: 'a', className: 'btn btn-primary', id: this.filterFilterButtonId, html: 'Filter', href: '#' });
+     filterButtonGroup.appendChild(clearFilterButtonNode); filterButtonGroup.appendChild(filterFilterButtonNode);
+
+     filterNode.appendChild(filterColumnFormGroup);
+     filterNode.appendChild(filterInputFormGroupNode);
+     filterNode.appendChild(filterButtonGroup);
+
+     insertPosition = document.getElementById(tableId).parentNode.parentNode;
+     insertPosition.parentNode.insertBefore(filterNode, insertPosition);
+
+     //Hook events for filter
+     filterFilterButtonNode.addEventListener('click', function () { self.FilterQuery(); });
+     clearFilterButtonNode.addEventListener('click', function () { self.ClearFilterQuery(); });
+
 };
 
 //Add the Spinner element above the table
@@ -204,9 +261,17 @@ TurboTablesLib.prototype.AddSpinner = function (tableId) {
      insertPosition.parentNode.insertBefore(spinnerNode, insertPosition);
 };
 
-TurboTablesLib.prototype.EnableRowSorting = function (tableId) {
+TurboTablesLib.prototype.EnableColumnSortingAndFiltering = function (tableId) {
      //throw 'Not implemented exception';
      var self = this;
+ 
+     //Initialize the filter column select list
+     var selectColumnNode = document.getElementById(this.selectFilterColumnId);
+     var option = document.createElement('option');
+     option.text = 'Select a column';
+     option.value = '';
+     option.setAttribute('disabled', 'true'); option.setAttribute('selected', 'true');
+     selectColumnNode.appendChild(option);
 
      //Discover the header columns and add event listeners to them
      var thead = document.getElementById(tableId).getElementsByTagName('thead');
@@ -220,6 +285,12 @@ TurboTablesLib.prototype.EnableRowSorting = function (tableId) {
                     self.ProcessSortEvent(this.id);
                });
           };
+          // If the column / field is filterable, then add to the select list
+          if (colHeaders[idx].className.indexOf('filterable') !== -1) {
+               option = document.createElement('option'); option.text = colHeaders[idx].id;
+               selectColumnNode.appendChild(option);
+          }
+
      };
 };
 
@@ -227,37 +298,15 @@ TurboTablesLib.prototype.EnableRowSorting = function (tableId) {
 TurboTablesLib.prototype.CreatePagingControls = function (tableId) {
 
      //Create elements in the paging controls row
-     var pagingCtrlNode = document.createElement('div');
-     pagingCtrlNode.className = 'row';
-     var tablePagerNode = document.createElement('div');
-     tablePagerNode.className = 'table-pager';
+     var pagingCtrlNode = document.createElement('div'); pagingCtrlNode.className = 'row';
 
      //Create table-pager control button group
-     var bgColumnNode = document.createElement('div');
-     bgColumnNode.className = 'col-sm-4';
-     var bgGroupNode = document.createElement('div');
-     bgGroupNode.className = 'btn-group';
-     var firstButtonNode = document.createElement('button');
-     firstButtonNode.className = 'btn btn-default disabled';
-     firstButtonNode.innerHTML = 'First';
-     firstButtonNode.id = this.firstButtonId;
-     firstButtonNode.setAttribute('type', 'button');
-     var prevButtonNode = document.createElement('button');
-     prevButtonNode.className = 'btn btn-default disabled';
-     prevButtonNode.innerHTML = 'Previous';
-     prevButtonNode.id = this.prevButtonId;
-     prevButtonNode.setAttribute('type', 'button');
-     var nextButtonNode = document.createElement('button');
-     nextButtonNode.className = 'btn btn-default';
-     nextButtonNode.innerHTML = 'Next';
-     nextButtonNode.id = this.nextButtonId;
-     nextButtonNode.setAttribute('type', 'button');
-     nextButtonNode.npLib = this;
-     var lastButtonNode = document.createElement('button');
-     lastButtonNode.className = 'btn btn-default';
-     lastButtonNode.innerHTML = 'Last';
-     lastButtonNode.id = this.lastButtonId;
-     lastButtonNode.setAttribute('type', 'button');
+     var bgColumnNode = document.createElement('div'); bgColumnNode.className = 'col-sm-5';
+     var bgGroupNode = document.createElement('div'); bgGroupNode.className = 'btn-group btn-sm';
+     var firstButtonNode = this.CreateElement({ type: 'button', className: 'btn btn-sm btn-primary disabled', id: this.firstButtonId, html: 'First', buttonType: 'button' });
+     var prevButtonNode = this.CreateElement({ type: 'button', className: 'btn btn-sm btn-primary disabled', id: this.prevButtonId, html: 'Previous', buttonType: 'button' });
+     var nextButtonNode = this.CreateElement({ type: 'button', className: 'btn btn-sm btn-primary', id: this.nextButtonId, html: 'Next', buttonType: 'button' });
+     var lastButtonNode = this.CreateElement({ type: 'button', className: 'btn btn-sm btn-primary', id: this.lastButtonId, html: 'Last', buttonType: 'button' });
      bgGroupNode.appendChild(firstButtonNode);
      bgGroupNode.appendChild(prevButtonNode);
      bgGroupNode.appendChild(nextButtonNode);
@@ -265,22 +314,12 @@ TurboTablesLib.prototype.CreatePagingControls = function (tableId) {
      bgColumnNode.appendChild(bgGroupNode);
 
      //Create jump input
-     var jumpColumnNode = document.createElement('div');
-     jumpColumnNode.className = 'col-sm-4';
-     var jbgGroupNode = document.createElement('div');
-     jbgGroupNode.className = 'input-group';
-     var jumpButtonSpanNode = document.createElement('span');
-     jumpButtonSpanNode.className = 'input-group-btn';
-     var jumpButtonNode = document.createElement('button');
-     jumpButtonNode.className = 'btn btn-default';
-     jumpButtonNode.innerHTML = 'Jump';
-     jumpButtonNode.id = this.jumpButtonId;
-     jumpButtonNode.setAttribute('type', 'button');
-     var jumpInputNode = document.createElement('input');
-     jumpInputNode.className = 'form-control input-xs';
-     jumpInputNode.id = this.jumpInputId;
+     var jumpColumnNode = document.createElement('div'); jumpColumnNode.className = 'col-sm-3';
+     var jbgGroupNode = document.createElement('div'); jbgGroupNode.className = 'input-group';
+     var jumpButtonSpanNode = document.createElement('span'); jumpButtonSpanNode.className = 'input-group-btn';
+     var jumpButtonNode = this.CreateElement({ type: 'button', className: 'btn btn-primary btn-sm', id: this.jumpButtonId, html: 'Jump', buttonType: 'button' });
+     var jumpInputNode = this.CreateElement({ type: 'input', className: 'form-control-sm col-sm-3', id: this.jumpInputId, buttonType: 'number' });
      jumpInputNode.setAttribute('name', 'jumpInput');
-     jumpInputNode.setAttribute('type', 'number');
      jumpInputNode.value = '1';
      jumpButtonSpanNode.appendChild(jumpButtonNode);
      jbgGroupNode.appendChild(jumpButtonSpanNode);
@@ -288,24 +327,18 @@ TurboTablesLib.prototype.CreatePagingControls = function (tableId) {
      jumpColumnNode.appendChild(jbgGroupNode);
 
      //create table-pager pageSizer
-     var sizerColumnNode = document.createElement('div');
-     sizerColumnNode.className = 'col-sm-4';
-     var pgSizerNode = document.createElement('div');
-     pgSizerNode.className = 'table-pageSizer';
-     var labelPgSizerNode = document.createElement('label');
-     labelPgSizerNode.innerHTML = 'Page size:';
-     var selectPgSizerNode = document.createElement('select');
-     selectPgSizerNode.className = 'input-sm';
-     selectPgSizerNode.id = this.selectPgSizerId;
+     var pgSizerNode = document.createElement('div'); pgSizerNode.className = 'table-pageSizer';
+     var labelPgSizerNode = this.CreateElement({ type: 'label', html: 'Page size:' });
+     var sizerColumnNode = document.createElement('div'); sizerColumnNode.className = 'col-sm-4';
+     var selectPgSizerNode = this.CreateElement({ type: 'select', className: 'input-sm', id: this.selectPgSizerId });
      selectPgSizerNode.setAttribute('name', 'pageSizer');
      pgSizerNode.appendChild(labelPgSizerNode);
      pgSizerNode.appendChild(selectPgSizerNode);
      sizerColumnNode.appendChild(pgSizerNode);
 
-     tablePagerNode.appendChild(bgColumnNode);
-     tablePagerNode.appendChild(jumpColumnNode);
-     tablePagerNode.appendChild(sizerColumnNode);
-     pagingCtrlNode.appendChild(tablePagerNode);
+     pagingCtrlNode.appendChild(bgColumnNode);
+     pagingCtrlNode.appendChild(jumpColumnNode);
+     pagingCtrlNode.appendChild(sizerColumnNode);
      var insertPosition = document.getElementById(tableId).parentNode.parentNode;
      insertPosition.parentNode.insertBefore(pagingCtrlNode, insertPosition.nextSibling);
 
@@ -340,7 +373,7 @@ TurboTablesLib.prototype.FirstPage = function () {
      //Start the spinner
      this.showSpinner(true);
      //Call data binding
-     this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
+     this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue);
 };
 
 //Move to previous display page
@@ -350,7 +383,7 @@ TurboTablesLib.prototype.PreviousPage = function () {
           //Start the spinner
           this.showSpinner(true);
           //Call data binding
-          this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
+          this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue);
     }
 };
 
@@ -377,7 +410,7 @@ TurboTablesLib.prototype.JumpPage = function () {
           //Start the spinner
           this.showSpinner(true);
           //Call data binding
-          this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
+          this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue);
      }
      
 	 input.value = this.page;
@@ -400,7 +433,7 @@ TurboTablesLib.prototype.NextPage = function () {
          //Start the spinner
          this.showSpinner(true);
          //call data binding
-         this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
+         this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue);
     }
 };
 
@@ -417,7 +450,32 @@ TurboTablesLib.prototype.LastPage = function () {
      //Start the spinner
      this.showSpinner(true);
      //call data binding
-     this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
+     this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue);
+};
+
+//Clear the filter column and value
+TurboTablesLib.prototype.ClearFilterQuery = function () {
+     this.filterColumn= '';
+     this.filterValue = '';
+     document.getElementById(this.selectFilterColumnId).selectedIndex = 0;
+     document.getElementById(this.filterValueInputId).value = '';
+};
+//Query using the filter column and value
+TurboTablesLib.prototype.FilterQuery = function () {
+     var filterSelectElem;
+     var found = false;
+
+     this.filterColumn = this.getFilterColumn();
+     this.filterValue = this.getFilterValue();
+
+     if ((this.filterValue.length > 0) && (this.filterColumn.length > 0)) {
+          //Start the spinner
+          this.showSpinner(true);
+
+          //call data binding
+          this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue);
+          this.ShowTableInfo();
+     }
 };
 
 //UpdatePageSize
@@ -434,7 +492,7 @@ TurboTablesLib.prototype.UpdatePageSize = function () {
     //Start the spinner
     this.showSpinner(true);
     //call data binding
-    this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
+    this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue);
     this.ShowTableInfo();
 };
 
@@ -449,18 +507,18 @@ TurboTablesLib.prototype.UpdatePagerControls = function() {
           lastPage = this.totalItems / this.pageSize;
      }
 
-     document.getElementById(this.firstButtonId).className = 'btn btn-default';
-     document.getElementById(this.prevButtonId).className = 'btn btn-default';
-     document.getElementById(this.nextButtonId).className = 'btn btn-default';
-     document.getElementById(this.lastButtonId).className = 'btn btn-default';
+     document.getElementById(this.firstButtonId).className = 'btn btn-sm btn-primary';
+     document.getElementById(this.prevButtonId).className = 'btn btn-sm btn-primary';
+     document.getElementById(this.nextButtonId).className = 'btn btn-sm btn-primary';
+     document.getElementById(this.lastButtonId).className = 'btn btn-sm btn-primary';
 
      if (this.page === 1) {
-          document.getElementById(this.firstButtonId).className = 'btn btn-default disabled';
-          document.getElementById(this.prevButtonId).className = 'btn btn-default disabled';
+          document.getElementById(this.firstButtonId).className = 'btn btn-sm btn-primary disabled';
+          document.getElementById(this.prevButtonId).className = 'btn btn-sm btn-primary disabled';
      }
      if (this.page === lastPage) {
-          document.getElementById(this.nextButtonId).className = 'btn btn-default disabled';
-          document.getElementById(this.lastButtonId).className = 'btn btn-default disabled';
+          document.getElementById(this.nextButtonId).className = 'btn btn-sm btn-primary disabled';
+          document.getElementById(this.lastButtonId).className = 'btn btn-sm btn-primary disabled';
      }
 	 
 	 document.getElementById(this.jumpInputId).value = this.page;
@@ -484,20 +542,20 @@ TurboTablesLib.prototype.ShowTableInfo = function () {
      this.UpdatePagerControls();
 };
 
-TurboTablesLib.prototype.FilterTable = function () {
-     var input, filter, tableBody, rows, rowData, rowIdx, dataIdx;
+TurboTablesLib.prototype.SearchTable = function () {
+     var input, search, tableBody, rows, rowData, rowIdx, dataIdx;
      var found = false;
 
-     input = document.getElementById(this.filterInputId);
-     filter = input.value.toUpperCase();
+     input = document.getElementById(this.searchInputId);
+     search = input.value.toUpperCase();
      //really need body reference
      tableBody = document.getElementById(this.tableId).getElementsByTagName('tbody');
      rows = tableBody[0].getElementsByTagName('tr');
 
-     for (var rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+     for (rowIdx = 0; rowIdx < rows.length; rowIdx++) {
           rowData = rows[rowIdx].getElementsByTagName('td');
-          for (var dataIdx = 0; dataIdx < rowData.length; dataIdx++) {
-               if (rowData[dataIdx].innerHTML.toUpperCase().indexOf(filter) > -1) {
+          for (dataIdx = 0; dataIdx < rowData.length; dataIdx++) {
+               if (rowData[dataIdx].innerHTML.toUpperCase().indexOf(search) > -1) {
                     found = true;
                     break;
                };
@@ -539,5 +597,49 @@ TurboTablesLib.prototype.ProcessSortEvent = function (id) {
      //Start the spinner
      this.showSpinner(true);
      //call data binding
-     this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection);
+     this.dataBinder(this.page, this.pageSize, this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue);
+};
+
+TurboTablesLib.prototype.ToggleFilterRow = function () {
+     var filterRow = document.getElementById(this.filterId);
+     if (filterRow.style.display === 'none')
+          filterRow.style.display = '';
+     else {
+          filterRow.style.display = 'none';
+          this.filterProperty = "";
+          this.filterPropertyValue = "";
+          document.getElementById(this.selectFilterColumnId).selectedIndex = 0;
+          document.getElementById(this.filterValueInputId).value = "";
+     }
+};
+
+TurboTablesLib.prototype.CreateElement = function (options) {
+
+     var element = document.createElement(options.type);
+     if ((typeof options.id !== 'undefined') && options.id) element.id = options.id;
+     if ((typeof options.className !== 'undefined') && options.className) element.className = options.className;
+     switch (options.type) {
+          case 'a':
+               element.innerHTML = options.html;
+               element.href = options.href;
+               break;
+          case 'button':
+               element.innerHTML = options.html;
+               element.setAttribute('type', options.buttonType);
+               break;
+          case 'form':
+               if ((typeof options.action !== 'undefined') && options.action) element.action = options.action;
+               break;
+          case 'input':
+               element.input = options.inputType;
+               if ((typeof options.placeholder !== 'undefined') && options.placeholder) element.placeholder = options.placeholder;
+               break;
+          case 'label':
+               element.innerHTML = options.html;
+               break;
+          default:
+               break;
+     }
+
+     return element;
 };

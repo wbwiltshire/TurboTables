@@ -9,17 +9,20 @@ var page = 1;
 var pageSize = 5;
 var sortColumn = 'Id';
 var sortDirection = 'asc';
+var filterColumn = '';
+var filterValue = '';
 
 /* GET default route */
 /* http://localhost/pager */
 router.get('/', function (req, res, next) {
      //var options = setGetOptions('http://' + req.headers.host + customerRoute + '?page=' + page + '&pageSize=' + pageSize,
-     var options = setGetOptions('http://' + req.headers.host + customerRoute + '?page=' + page + '&pageSize=' + pageSize + '&sortColumn=' + sortColumn + '&direction=' + sortDirection,
+     var options = setGetOptions('http://' + req.headers.host + customerRoute + '?page=' + page + '&pageSize=' + pageSize + '&sortColumn=' + sortColumn + '&direction=' + sortDirection +
+          '&filterColumn=' + filterColumn + '&filterValue' + filterValue,
           {}
      );
      //Call customer REST service
      request(options, function (error, response, body) {
-          if (!error && response.statusCode == 200) {
+          if (!error && response.statusCode === 200) {
                var json = JSON.parse(body);
                res.render('pager', { title: 'Paged Customer List', customers: json });
           }

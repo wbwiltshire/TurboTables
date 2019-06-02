@@ -16,12 +16,12 @@ $(document).ready(function () {
      customerTable.setDataBinding(CustomerList);
 
      $('#refresh').click(function () {
-          CustomerList(customerTable.getPage(), customerTable.getPageSize(), customerTable.getSortColumn(), customerTable.getSortDirection())
+          CustomerList(customerTable.getPage(), customerTable.getPageSize(), customerTable.getSortColumn(), customerTable.getSortDirection(), customerTable.getFilterColumn(), customerTable.getFilterValue());
      });
 
-     function CustomerList(page, pageSize, sortColumn, direction) {
+     function CustomerList(page, pageSize, sortColumn, direction, filterColumn, filterValue) {
         var delay = 1000;
-        var requestString = '?page=' + page + '&pageSize=' + pageSize + '&sortColumn=' + sortColumn + '&direction=' + direction;
+        var requestString = '?page=' + page + '&pageSize=' + pageSize + '&sortColumn=' + sortColumn + '&direction=' + direction + '&filterColumn=' + filterColumn + '&filterValue=' + filterValue;
         var url = baseUrl + 'customer/' + requestString;
         var gridBodyId = 'CustomerList';
         var template = 'customerListHGrid';

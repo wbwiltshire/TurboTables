@@ -8,13 +8,13 @@
 </div>
 <div class="row">
     <div class="col-md-12">
-            <table id="CustomerTable" ctTotalItems="{{customers.totalItems}}" class="table table-striped table-bordered table-hover table-condensed table-auto-number">
+            <table id="CustomerTable" ctTotalItems="{{customers.totalItems}}" class="table table-striped table-bordered table-hover table-sm table-auto-number">
                 <thead>
                     <tr id="colHeaders">
-                        <th id="Id" class="sortable"><a href="#">ID</a></th>
-                        <th id="FirstName" class="sortable"><a href="#">First Name</a></th>
-                        <th id="LastName" class="sortable"><a href="#">Last Name</a></th>
-                        <th id="EMail" class="sortable"><a href="#">E-Mail</a></th>
+                        <th id="Id" class="sortable filterable"><a href="#">Id</a></th>
+                        <th id="FirstName" class="sortable filterable"><a href="#">First Name</a></th>
+                        <th id="LastName" class="sortable filterable"><a href="#">Last Name</a></th>
+                        <th id="EMail" class="sortable filterable"><a href="#">E-Mail</a></th>
                     </tr>
                 </thead>
                 <tbody id="CustomerList">

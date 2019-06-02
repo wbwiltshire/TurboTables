@@ -17,9 +17,12 @@ router.get('/', function (req, res) {
      else {
           //simulate network delay
           setTimeout(function () {
-               if (query.sortColumn)
+               if (query.filterColumn && query.filterValue)
+                    res.send(repo.findCustomersPaged(query.page, query.pageSize, query.sortColumn, query.direction, query.filterColumn, query.filterValue));
+               else if (query.sortColumn)
                     res.send(repo.findAllCustomersPagedByOrder(query.page, query.pageSize, query.sortColumn, query.direction));
                else
+                    //res.send({});
                     res.send(repo.findAllCustomersPaged(query.page, query.pageSize));
           }, delayPaged);
      }
