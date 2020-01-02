@@ -10,6 +10,7 @@ $(document).ready(function () {
           sortColumn: 'Id',
           sortDirection: 'asc',
           columnHeaderClass: 'colHeaders',
+          showFilter: true,
           spinnerSource: '/images/spinner-128.gif'
      });
 

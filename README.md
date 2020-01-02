@@ -52,6 +52,7 @@ var customerTable = new TurboTablesLib({
     pagerSizeOptions: [[10, 25, 50, -1],[10, 25, 50, 'All']],    
     sortColumn: 'Id',
     sortDirection: 'asc',
+    showFilter: true,
     columnHeaderClass: 'colHeaders',
     spinnerSource: '/images/spinner-128.gif'
 }); 
@@ -102,6 +103,16 @@ customerTable.setDataBinding(CustomerList);
 ```js
 <script src="/javascripts/turbotables.js" type="text/javascript"></script>
 ```
+
+### Themes / Styling
+This sample uses Bootstrap 4 and Bootswatch themes
+
+* Using Cosmo for light and Slate for dark
+* Using FontAwesome for icons
+* [Bootswatch](https://bootswatch.com/)
+* [BootstrapCDN](https://www.bootstrapcdn.com/bootswatch)
+* [FontAwesome](https://fontawesome.com/icons)
+
 ### FAQ
 1. Why aren't my columns sorting?
   * The column header must have a header tag ```<a href="#" >columnHeader</a>```

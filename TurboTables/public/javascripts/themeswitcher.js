@@ -1,60 +1,26 @@
 ﻿$(document).ready(function () {
-     var themeElement = null;
+     var lightThemeStyle = { href: 'https://stackpath.bootstrapcdn.com/bootswatch/4.4.1/cosmo/bootstrap.min.css', integrity: 'sha256-KgiMiZgZazlcRqcTnpKlQRyoi1Y79W1dsn5CtKFtwH0=' };
+     var darkThemeStyle = { href: 'https://stackpath.bootstrapcdn.com/bootswatch/4.4.1/slate/bootstrap.min.css', integrity: 'sha256-6NKhLkfyx8JV2uViSv6uakftk/GM5vfDWtY7ALlbG44=' };
 
-     checkCookie();
+     checkCookie(lightThemeStyle, darkThemeStyle);
 
      $('#theme-toggle').click(function () {
+          var styleElement = document.getElementById('theme-style');
+          var themeElement = document.getElementById('theme-toggle');
 
-          themeElement = document.getElementById('theme-toggle');
-          if (themeElement.innerHTML.trim() === 'Light')
-               setLightMode(themeElement);
-          else
-               setDarkMode(themeElement);
+          if (themeElement.innerHTML.trim() === 'Light') 
+               setTheme(themeElement, styleElement, lightThemeStyle, 'Dark', 'Light');
+          else 
+               setTheme(themeElement, styleElement, darkThemeStyle, 'Light', 'Dark');
      });
 
 });
 
-function setDarkMode(themeElement) {
-     var linkElements = document.styleSheets;
-     var idx = 0;
-
-     for (idx = 0; idx < linkElements.length; idx++) {
-          if (linkElements[idx].href.indexOf('/bootstrap/') > 0) {
-               linkElements[idx].disabled = true;
-               break;
-          }
-     }
-     for (idx = 0; idx < linkElements.length; idx++) {
-          if (linkElements[idx].href.indexOf('bootswatch') > 0) {
-               linkElements[idx].disabled = false;
-               break;
-          }
-     }
-
-     themeElement.innerHTML = 'Light';
-     setCookie('currentTheme', 'Dark', 7);
-}
-
-function setLightMode(themeElement) {
-     var linkElements = document.styleSheets;
-     var idx = 0;
-
-     for (idx = 0; idx < linkElements.length; idx++) {
-          if (linkElements[idx].href.indexOf('/bootswatch/') > 0) {
-               linkElements[idx].disabled = true;
-               break;
-          }
-     }
-     for (idx = 0; idx < linkElements.length; idx++) {
-          if (linkElements[idx].href.indexOf('bootstrap') > 0) {
-               linkElements[idx].disabled = false;
-               break;
-          }
-     }
-
-     themeElement.innerHTML = 'Dark';
-     setCookie('currentTheme', 'Light', 7);
-
+function setTheme(themeElement, styleElement, styleInfo, nextStyle, currentStyle) {
+     styleElement.setAttribute('href', styleInfo.href);
+     //styleElement.setAttribute('integrity', styleInfo.integrity);
+     themeElement.innerHTML = nextStyle;
+     setCookie('currentTheme', currentStyle, 7);
 }
 
 function setCookie(cname, cvalue, exdays) {
@@ -79,21 +45,22 @@ function getCookie(cname) {
      return '';
 }
 
-function checkCookie() {
-     var currentTheme = getCookie("currentTheme");
+function checkCookie(lightThemeStyle, darkThemeStyle) {
      var themeElement = document.getElementById('theme-toggle');
+     var styleElement = document.getElementById('theme-style');
+     var currentTheme = getCookie("currentTheme");
 
      switch (currentTheme) {
           case 'Light':
                if (themeElement.innerHTML.trim() === 'Light')
-                    setLightMode(themeElement);
+                    setTheme(themeElement, styleElement, lightThemeStyle, 'Dark', 'Light');
                break;
           case 'Dark':
                if (themeElement.innerHTML.trim() === 'Dark')
-                    setDarkMode(themeElement);
+                    setTheme(themeElement, styleElement, darkThemeStyle, 'Light', 'Dark');
                break;
           default:
-               setDarkMode(themeElement);
+               setTheme(themeElement, styleElement, darkThemeStyle, 'Light', 'Dark');
                break;
 
      }

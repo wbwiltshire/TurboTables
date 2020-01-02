@@ -53,6 +53,7 @@ function TurboTablesLib(options) {
      this.totalItemsAttribute = '';
      this.totalItems = 0;
      this.tableInfoId = 'showing';
+     this.showFilter = false;
      this.filterId = 'filter';
      this.filterIconId = 'filterIcon';
      this.filterValueInputId = 'filterValueInput';
@@ -84,6 +85,8 @@ function TurboTablesLib(options) {
                this.sortDirection = options.sortDirection;
           if (options.columnHeaderClass)
                this.columnHeaderClass = options.columnHeaderClass;
+          if (options.showFilter)
+               this.showFilter = options.showFilter;
           if (options.spinnerSource)
                this.spinnerSource = options.spinnerSource;
           if (options.totalItemsAttribute)
@@ -170,10 +173,12 @@ TurboTablesLib.prototype.CreateSearchAndFilterRows = function (tableId) {
      //Create elements in the search row
      var searchNode = document.createElement('div'); searchNode.className = 'row';
 
-     var filterIconNode = this.CreateElement({ type: 'a', id: this.filterIconId, href: '#', html: '<i class="fa fa-filter fa-2x"></i>' });
-     var showingLabelNode = this.CreateElement({ type: 'label', className: 'col-sm-10', id: this.tableInfoId, html: this.tableInfoTemplate });
      var infoNode = document.createElement('div'); infoNode.className = 'col-sm-4';
-     infoNode.appendChild(filterIconNode);
+     if (this.showFilter) {
+          var filterIconNode = this.CreateElement({ type: 'a', id: this.filterIconId, href: '#', html: '<i class="fa fa-filter fa-2x"></i>' });
+          infoNode.appendChild(filterIconNode);
+     }
+     var showingLabelNode = this.CreateElement({ type: 'label', className: 'col-sm-10', id: this.tableInfoId, html: this.tableInfoTemplate });
      infoNode.appendChild(showingLabelNode);
      searchNode.appendChild(infoNode);
 
@@ -191,10 +196,12 @@ TurboTablesLib.prototype.CreateSearchAndFilterRows = function (tableId) {
      insertPosition.parentNode.insertBefore(searchNode, insertPosition);
 
      var self = this;
-     //Hook events for filter icon
-     filterIconNode.addEventListener("click", function () {
-          self.ToggleFilterRow();
-     });
+     if (this.showFilter) {
+          //Hook events for filter icon
+          filterIconNode.addEventListener("click", function () {
+               self.ToggleFilterRow();
+          });
+     }
 
      //Hook events for search
      searchInputNode.addEventListener("keyup", function () {
@@ -207,39 +214,41 @@ TurboTablesLib.prototype.CreateSearchAndFilterRows = function (tableId) {
           searchInputNode.setAttribute('cursor', 'auto');
      };
 
-     //
-     //Create elements in the filter row
-     var filterNode = document.createElement('div'); filterNode.className = 'row';
-     filterNode.id = this.filterId; filterNode.style.display = 'none';
+     if (this.showFilter) {
+          //
+          //Create elements in the filter row
+          var filterNode = document.createElement('div'); filterNode.className = 'row';
+          filterNode.id = this.filterId; filterNode.style.display = 'none';
 
-     //Create Column Select
-     var filterColumnFormGroup = document.createElement('div'); filterColumnFormGroup.className = 'form-group col-sm-3';
-     var filterColumnSelect = document.createElement('select'); filterColumnSelect.className = 'form-control'; filterColumnSelect.id = this.selectFilterColumnId;
-     filterColumnFormGroup.appendChild(filterColumnSelect);
+          //Create Column Select
+          var filterColumnFormGroup = document.createElement('div'); filterColumnFormGroup.className = 'form-group col-sm-3';
+          var filterColumnSelect = document.createElement('select'); filterColumnSelect.className = 'form-control'; filterColumnSelect.id = this.selectFilterColumnId;
+          filterColumnFormGroup.appendChild(filterColumnSelect);
 
-     //Create Column Value
-     var filterInputFormGroupNode = document.createElement('div'); filterInputFormGroupNode.className = 'form-group row col-sm-3';
-     var filterInputGroupNode = document.createElement('div'); filterInputGroupNode.className = 'input-group col-sm-12';
-     var filterValueInputNode = this.CreateElement({ type: 'input', className: 'form-control col-sm-12', id: this.filterValueInputId, placeholder: 'Value', inputType: 'text' });
-     filterInputGroupNode.appendChild(filterValueInputNode);
-     filterInputFormGroupNode.appendChild(filterInputGroupNode);
+          //Create Column Value
+          var filterInputFormGroupNode = document.createElement('div'); filterInputFormGroupNode.className = 'form-group row col-sm-3';
+          var filterInputGroupNode = document.createElement('div'); filterInputGroupNode.className = 'input-group col-sm-12';
+          var filterValueInputNode = this.CreateElement({ type: 'input', className: 'form-control col-sm-12', id: this.filterValueInputId, placeholder: 'Value', inputType: 'text' });
+          filterInputGroupNode.appendChild(filterValueInputNode);
+          filterInputFormGroupNode.appendChild(filterInputGroupNode);
 
-     //Create Clear and Filter buttons
-     var filterButtonGroup = document.createElement('div'); filterButtonGroup.className = 'filter-grp col-sm-4';
-     var clearFilterButtonNode = this.CreateElement({ type: 'a', className: 'btn btn-primary', id: this.clearFilterButtonId, html: 'Clear', href: '#'});
-     var filterFilterButtonNode = this.CreateElement({ type: 'a', className: 'btn btn-primary', id: this.filterFilterButtonId, html: 'Filter', href: '#' });
-     filterButtonGroup.appendChild(clearFilterButtonNode); filterButtonGroup.appendChild(filterFilterButtonNode);
+          //Create Clear and Filter buttons
+          var filterButtonGroup = document.createElement('div'); filterButtonGroup.className = 'filter-grp col-sm-4';
+          var clearFilterButtonNode = this.CreateElement({ type: 'a', className: 'btn btn-primary', id: this.clearFilterButtonId, html: 'Clear', href: '#' });
+          var filterFilterButtonNode = this.CreateElement({ type: 'a', className: 'btn btn-primary', id: this.filterFilterButtonId, html: 'Filter', href: '#' });
+          filterButtonGroup.appendChild(clearFilterButtonNode); filterButtonGroup.appendChild(filterFilterButtonNode);
 
-     filterNode.appendChild(filterColumnFormGroup);
-     filterNode.appendChild(filterInputFormGroupNode);
-     filterNode.appendChild(filterButtonGroup);
+          filterNode.appendChild(filterColumnFormGroup);
+          filterNode.appendChild(filterInputFormGroupNode);
+          filterNode.appendChild(filterButtonGroup);
 
-     insertPosition = document.getElementById(tableId).parentNode.parentNode;
-     insertPosition.parentNode.insertBefore(filterNode, insertPosition);
+          insertPosition = document.getElementById(tableId).parentNode.parentNode;
+          insertPosition.parentNode.insertBefore(filterNode, insertPosition);
 
-     //Hook events for filter
-     filterFilterButtonNode.addEventListener('click', function () { self.FilterQuery(); });
-     clearFilterButtonNode.addEventListener('click', function () { self.ClearFilterQuery(); });
+          //Hook events for filter
+          filterFilterButtonNode.addEventListener('click', function () { self.FilterQuery(); });
+          clearFilterButtonNode.addEventListener('click', function () { self.ClearFilterQuery(); });
+     }
 
 };
 
@@ -264,14 +273,16 @@ TurboTablesLib.prototype.AddSpinner = function (tableId) {
 TurboTablesLib.prototype.EnableColumnSortingAndFiltering = function (tableId) {
      //throw 'Not implemented exception';
      var self = this;
- 
-     //Initialize the filter column select list
-     var selectColumnNode = document.getElementById(this.selectFilterColumnId);
-     var option = document.createElement('option');
-     option.text = 'Select a column';
-     option.value = '';
-     option.setAttribute('disabled', 'true'); option.setAttribute('selected', 'true');
-     selectColumnNode.appendChild(option);
+
+     if (this.showFilter) {
+          //Initialize the filter column select list
+          var selectColumnNode = document.getElementById(this.selectFilterColumnId);
+          var option = document.createElement('option');
+          option.text = 'Select a column';
+          option.value = '';
+          option.setAttribute('disabled', 'true'); option.setAttribute('selected', 'true');
+          selectColumnNode.appendChild(option);
+     }
 
      //Discover the header columns and add event listeners to them
      var thead = document.getElementById(tableId).getElementsByTagName('thead');
@@ -285,10 +296,13 @@ TurboTablesLib.prototype.EnableColumnSortingAndFiltering = function (tableId) {
                     self.ProcessSortEvent(this.id);
                });
           };
-          // If the column / field is filterable, then add to the select list
-          if (colHeaders[idx].className.indexOf('filterable') !== -1) {
-               option = document.createElement('option'); option.text = colHeaders[idx].id;
-               selectColumnNode.appendChild(option);
+
+          if (this.showFilter) {
+               // If the column / field is filterable, then add to the select list
+               if (colHeaders[idx].className.indexOf('filterable') !== -1) {
+                    option = document.createElement('option'); option.text = colHeaders[idx].id;
+                    selectColumnNode.appendChild(option);
+               }
           }
 
      };
