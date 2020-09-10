@@ -9,6 +9,8 @@ For more informaton:
 * [Handlebars.js](http://Handlebarsjs.com/)
 * [Bootstrap](https://getbootstrap.com/)
 
+Updated to VS 2019
+
 ### Usage
 1. CSS changes
   * Add CCS links for FontAwesome and TurboTables
