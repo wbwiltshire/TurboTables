@@ -21,12 +21,11 @@ router.get('/', async function (req, res, next) {
     var options = setGetOptions('http://' + req.headers.host + customerRoute + '?page=' + page + '&pageSize=' + pageSize,
         { }
     );
-    
+
     try {
         response = await axios.get(options.url);
         json = response.data;
         if (response.status === 200) {
-            var json = JSON.parse(body);
             res.render('customer', { title: 'Customer List', message: 'Hello', customers: json });
         }
         else
@@ -50,8 +49,7 @@ router.get('/:id', async function (req, res, next) {
         response = await axios.get(options.url);
         json = response.data;
         if (response.status === 200) {
-            var json = JSON.parse(body);
-            res.render('customerdetail', { title: 'Customer Details', message: 'Hello', customers: json });
+            res.render('customerdetail', { title: 'Customer Details', message: 'Hello', customer: json });
         }
         else
             console.log('Error: ' + response.statusCode + ' - ' + error);

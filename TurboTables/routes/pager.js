@@ -27,7 +27,6 @@ router.get('/', async function (req, res, next) {
         response = await axios.get(options.url);
         json = response.data;
         if (response.status === 200) {
-            var json = JSON.parse(body);
             res.render('pager', { title: 'Paged Customer List', customers: json });
         }
         else
