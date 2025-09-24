@@ -1,0 +1,32 @@
+{
+    "name": "turbotables",
+    "version": "0.9.3",
+    "description": "Simple Table Paging",
+    "private": true,
+    "main": "app.js",
+    "author": {
+        "name": "wbwiltshire"
+    },
+    "scripts": {
+        "start": "node ./app.js",
+        "build": "webpack --config webpack.config.js",
+        "update": "ncu --interactive"
+    },
+    "dependencies": {
+        "body-parser": "2.2.0",
+        "cookie-parser": "1.4.7",
+        "debug": "4.4.3",
+        "express": "5.1.0",
+        "handlebars": "4.7.8",
+        "hbs": "4.2.0",
+        "lodash": "4.17.21",
+        "morgan": "1.10.1",
+        "request": "2.88.2",
+        "request-debug": "0.2.0",
+        "serve-favicon": "2.5.1"
+    },
+    "devDependencies": {
+        "webpack": "^5.101.3",
+        "webpack-cli": "^6.0.1"
+    }
+}
