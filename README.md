@@ -124,8 +124,57 @@ This sample uses Bootstrap 4 and Bootswatch themes
   ncu --interactive
 ```
 * Webpack is used to keep the Client-side javascript libraries update to date
-
 * Select Run->Start Debugging from the VSC menu 
+
+### Deploy to Nginx
+* Create a tar file which contains the following:
+  - all the files in the node_modules folder
+  - all files in the public folder
+  - all files in the routes folder
+  - all files in the views folder
+  - the app.js, repository.js, and customer.json files
+ * copy the tar file over to the Linux server
+ * create a directory in the web folder and set owership (www-data), group, and permissions
+ ```
+sudo mkdir /web/TurboTables
+sudo chown www-data /web/TurboTables
+sudo chgrp www-data /web/TurboTables
+sudo chmod 775 /web/TurboTables
+cd /web/MeanGreen
+ ```
+ * extract the files into the web folder and set owership (www-data), group, and permissions
+```
+sudo tar -xvf /home/wbw/turbotables.tar
+```
+ * create a services file (turbotables.service) in the /etc/systemd/system folder
+ ```
+ [Unit]
+Description=Turbo Tables App
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /web/TurboTables/app.js
+WorkingDirectory=/web/TurboTables
+Restart=always
+RestartSec=10
+User=www-data
+Environment=NODE_ENV=production
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=turbotables-app
+
+[Install]
+WantedBy=multi-user.target
+ ```
+ * Reload System.d and start the service
+ ```
+sudo systemctl daemon-reload
+sudo systemctl restart turbotables.service
+ ```
+ * If there are any problems, you can review the service's journal
+ ```
+ sudo journalctl -u turbotables.service -f
+ ```
 
 ### FAQ
 1. Why aren't my columns sorting?
