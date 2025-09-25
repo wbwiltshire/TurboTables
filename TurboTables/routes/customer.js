@@ -1,8 +1,7 @@
 //Routing for customer web page
 var express = require('express');
 var router = express.Router();
-var request = require('request');
-require('request-debug')(request);
+const axios = require('axios');
 
 var customerRoute = '/api/customer/';
 var page = 1;
@@ -16,43 +15,49 @@ router.get('/add', function (req, res) {
 });
 
 /* GET home page. */
-router.get('/', function (req, res, next) {
-     var options = setGetOptions('http://' + req.headers.host + customerRoute + '?page=' + page + '&pageSize=' + pageSize,
+router.get('/', async function (req, res, next) {
+    var response = null;
+    var json = null;
+    var options = setGetOptions('http://' + req.headers.host + customerRoute + '?page=' + page + '&pageSize=' + pageSize,
         { }
     );
-    request(options, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            //console.log("status: " + response.statusCode);
-            //console.log(body); 
-            var json = JSON.parse(body);
-            //console.log("json[0].DeviceID: " + json[0].DeviceID);
-            //respond with parsed response
+
+    try {
+        response = await axios.get(options.url);
+        json = response.data;
+        if (response.status === 200) {
             res.render('customer', { title: 'Customer List', message: 'Hello', customers: json });
         }
-        else {
+        else
             console.log('Error: ' + response.statusCode + ' - ' + error);
-        }
-    });
+    }
+    catch (error) {
+        console.log('Error: ', error);
+        next(error);     
+    }
 });
 
 /* GET by id page. */
-router.get('/:id', function (req, res, next) {
+router.get('/:id', async function (req, res, next) {
+    var response = null;
+    var json = null;
     var options = setGetOptions('http://' + req.headers.host + customerRoute + req.params.id,
         {}
     );
-    request(options, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            //console.log("status: " + response.statusCode);
-            //console.log(body); 
-            var json = JSON.parse(body);
-            //console.log("json[0].DeviceID: " + json[0].DeviceID);
-            //respond with parsed response
+
+    try {
+        response = await axios.get(options.url);
+        json = response.data;
+        if (response.status === 200) {
             res.render('customerdetail', { title: 'Customer Details', message: 'Hello', customer: json });
         }
-        else {
+        else
             console.log('Error: ' + response.statusCode + ' - ' + error);
-        }
-    });
+    }
+    catch (error) {
+        console.log('Error: ', error);
+        next(error);     
+    }
 });
 
 function setGetOptions(u, q) {
