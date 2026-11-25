@@ -22,12 +22,12 @@ This repository contains:
 
 ## Installing in an ASP.NET Core app (LibMan)
 
-Releases are git tags (`v1.0.0`, ...). jsDelivr serves the files in `dist/` for any tag, so LibMan can install a pinned version. Add this to the app's `libman.json`:
+Releases are git tags (`v1.0.0`, ...). jsDelivr serves the files in `dist/` for any tag, so LibMan can install a pinned version. Add this to the app's `libman.json` (write the library as `owner/repo@tag` without jsDelivr's `gh/` prefix; LibMan adds it):
 
 ```json
 {
   "provider": "jsdelivr",
-  "library": "gh/wbwiltshire/TurboTables@v1.0.0",
+  "library": "wbwiltshire/TurboTables@v1.0.0",
   "destination": "wwwroot/lib/turbotables/",
   "files": [ "dist/turbotables.min.js", "dist/turbotables.min.js.map", "dist/turbotables.min.css" ]
 }

@@ -115,7 +115,7 @@ describe('pages', () => {
           const html = await (await get('/')).text();
           for (const href of ['/pager', '/customer', '/customer/add', '/customer/3', 'https://github.com/wbwiltshire/TurboTables'])
                expect(html).toContain('href="' + href + '"');
-          expect(html).toContain('gh/wbwiltshire/TurboTables@v' + require('../package.json').version);
+          expect(html).toContain('"library": "wbwiltshire/TurboTables@v' + require('../package.json').version);
           expect(html).toMatch(/\d+ customers\)/);
      });
 
