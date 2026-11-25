@@ -187,22 +187,27 @@ Never move or re-push an existing tag. jsDelivr caches tagged files permanently.
 
 ## Deploying the Demo to a Linux Server with Nginx Proxy Manager
 
-The demo runs as a systemd service on a Linux server (e.g. Debian). Nginx Proxy Manager (NPM), running in Docker on the same host, forwards to it on the Docker bridge at `172.17.0.1:8006`, so the app isn't reachable from the network directly. The unit file is [`Linux/turbotables.service`](Linux/turbotables.service). Requires Node.js 20 or later on the server.
+The demo runs as a systemd service on a Linux server (e.g. Debian). Nginx Proxy Manager (NPM), running in Docker on the same host, forwards to it on the Docker bridge at `172.17.0.1:8006`, so the app isn't reachable from the network directly. The unit file is [`Linux/turbotables.service`](Linux/turbotables.service).
 
-1. Build the release tarball on your workstation (PowerShell; Windows 10 and later include `tar`):
+The server needs Node.js 20 or later, but **not npm**: the tarball includes the runtime `node_modules`, built on your workstation. That works across Windows and Linux because every runtime package is plain JavaScript (no native modules or install scripts). If a dependency with native code is ever added, install npm on the server and run `npm ci --omit=dev` there instead.
+
+1. Build the release tarball on your workstation (PowerShell 7; Windows 10 and later include `tar`). The files are staged in a temporary folder so your working copy keeps its dev packages:
    ```
    cd TurboTables
-   tar -czf turbotables-demo.tgz app.js config.js validation.js repository.js customer.json package.json package-lock.json public routes views
+   $stage = "$env:TEMP\turbotables-deploy"
+   Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
+   New-Item -ItemType Directory $stage | Out-Null
+   Copy-Item app.js, config.js, validation.js, repository.js, customer.json, package.json, package-lock.json, public, routes, views $stage -Recurse
+   npm ci --omit=dev --prefix $stage
+   tar -czf turbotables-demo.tgz -C $stage .
    scp turbotables-demo.tgz ../Linux/turbotables.service <your-server>:~
    ```
-2. On the server, install into an empty folder (move any previous install aside first) and install only the runtime packages:
+2. On the server, extract into an empty folder (move any previous install aside first):
    ```
    sudo systemctl stop turbotables.service      # if it is already installed
    sudo mv /web/TurboTables /web/TurboTables.old  # if a previous version exists
    sudo mkdir -p /web/TurboTables
    sudo tar -xzf ~/turbotables-demo.tgz -C /web/TurboTables
-   cd /web/TurboTables
-   sudo npm ci --omit=dev
    sudo chown -R root:www-data /web/TurboTables
    sudo chmod -R u=rwX,g=rX,o= /web/TurboTables
    ```
