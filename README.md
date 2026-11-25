@@ -11,6 +11,8 @@ What it adds around your table:
 
 Colours come from Bootstrap 5.3's CSS variables, so the controls follow light/dark mode and Bootswatch themes.
 
+![TurboTables on the demo's Customers page: Filter button, Showing count and Search above the table, sortable headers, and First/Previous/Next/Last, Jump and Page size below](docs/images/customers.png)
+
 This repository contains:
 
 | Path | What it is |
@@ -18,6 +20,7 @@ This repository contains:
 | `dist/` | The released library files: `turbotables.js`, `turbotables.min.js` (+ source map), `turbotables.css`, `turbotables.min.css` |
 | `TurboTables/public/javascripts/turbotables.js` | Library source |
 | `TurboTables/` | Demo app (Node.js, Express 5, Handlebars) and tests |
+| `docs/images/` | README screenshots |
 | `Linux/` | systemd unit for the demo server (`turbotables.service`) |
 | `CHANGELOG.md` | Release history, including breaking changes |
 
