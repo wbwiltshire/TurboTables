@@ -1,6 +1,10 @@
-<h1>{{status}}</h1>
-<p class="lead">{{message}}</p>
-{{#if stack}}
-<pre class="small">{{stack}}</pre>
-{{/if}}
-<a href="/" class="btn btn-primary">Home</a>
+<div class="card col-lg-8">
+     <div class="card-body">
+          <h1 class="h3">{{status}}</h1>
+          <p class="lead text-body-secondary">{{message}}</p>
+          {{#if stack}}
+          <pre class="small bg-body-tertiary p-3 rounded">{{stack}}</pre>
+          {{/if}}
+          <a href="/" class="btn btn-primary">Home</a>
+     </div>
+</div>

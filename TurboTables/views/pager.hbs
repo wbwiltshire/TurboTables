@@ -1,37 +1,36 @@
-<h1>{{title}}</h1>
-<div class="row mb-3">
-     <div class="col-md-12">
-          <a id="add" class="btn btn-primary" href="/customer/add">Add</a>
-          <a id="refresh" class="btn btn-primary" href="#">Refresh</a>
-     </div>
+<div class="page-header">
+     <h1>{{title}}</h1>
 </div>
-<div class="row">
-     <div class="col-md-12">
-          <table id="CustomerTable" ctTotalItems="{{customers.totalItems}}" data-page-size="{{pageSize}}" class="table table-striped table-bordered table-hover table-sm">
-               <thead>
-                    <tr class="colHeaders">
-                         <th id="Id" class="sortable filterable"><a href="#">Id</a></th>
-                         <th id="FirstName" class="sortable filterable"><a href="#">First Name</a></th>
-                         <th id="LastName" class="sortable filterable"><a href="#">Last Name</a></th>
-                         <th id="EMail" class="sortable filterable"><a href="#">E-Mail</a></th>
-                    </tr>
-               </thead>
-               <tbody id="CustomerList">
-                    {{#each customers.customers}}
-                    <tr>
-                         <td><a href="/customer/{{Id}}">{{Id}}</a></td>
-                         <td>{{FirstName}}</td>
-                         <td>{{LastName}}</td>
-                         <td>{{EMail}}</td>
-                    </tr>
-                    {{/each}}
-               </tbody>
-          </table>
-     </div>
+<div class="d-flex gap-2 mb-3">
+     <a id="add" class="btn btn-primary" href="/customer/add"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add</a>
+     <a id="refresh" class="btn btn-primary" href="#"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</a>
 </div>
-<div class="row mt-3">
-     <div class="col-lg-4">
-          <a href="/" class="btn btn-primary">Back</a>
+<div class="card">
+     <div class="card-body">
+          <div class="row">
+               <div class="col-12">
+                    <table id="CustomerTable" ctTotalItems="{{customers.totalItems}}" data-page-size="{{pageSize}}" class="table table-hover table-sm mb-0">
+                         <thead>
+                              <tr class="colHeaders">
+                                   <th data-column="Id" class="sortable filterable"><a href="#">Id</a></th>
+                                   <th data-column="FirstName" class="sortable filterable"><a href="#">First Name</a></th>
+                                   <th data-column="LastName" class="sortable filterable"><a href="#">Last Name</a></th>
+                                   <th data-column="EMail" class="sortable filterable"><a href="#">E-Mail</a></th>
+                              </tr>
+                         </thead>
+                         <tbody id="CustomerList">
+                              {{#each customers.customers}}
+                              <tr>
+                                   <td><a href="/customer/{{Id}}">{{Id}}</a></td>
+                                   <td>{{FirstName}}</td>
+                                   <td>{{LastName}}</td>
+                                   <td>{{EMail}}</td>
+                              </tr>
+                              {{/each}}
+                         </tbody>
+                    </table>
+               </div>
+          </div>
      </div>
 </div>
 <script id="customerListHGrid" type="text/x-handlebars-template">

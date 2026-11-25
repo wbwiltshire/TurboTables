@@ -46,10 +46,11 @@ const CDN = 'https://cdn.jsdelivr.net';
 const CSP = [
      "default-src 'self'",
      "script-src 'self' " + CDN + " 'unsafe-eval'",
-     "style-src 'self' " + CDN + ' https://fonts.googleapis.com', // Bootswatch Cosmo @imports Google Fonts
-     "font-src 'self' " + CDN + ' https://fonts.gstatic.com',
+     "style-src 'self' " + CDN,
+     "font-src 'self' " + CDN,
      "img-src 'self' data:",
-     "connect-src 'self'",
+     // Bootstrap's files reference source maps that DevTools fetches; allow only that folder.
+     "connect-src 'self' " + CDN + '/npm/bootstrap@5.3.9/dist/',
      "form-action 'self'",
      "frame-ancestors 'none'",
      "base-uri 'self'",
@@ -74,7 +75,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', require('./routes/index'));
 app.use('/customer', require('./routes/customer'));
 app.use('/pager', require('./routes/pager'));
-app.use('/api/customer', require('./routes/api/customer'));
+const customerApi = require('./routes/api/customer');
+app.use('/api/customer', customerApi);
 
 // 404
 app.use(function (req, res, next) {
@@ -97,8 +99,16 @@ app.use(function (err, req, res, next) {
 // Start the server unless loaded by a test.
 if (require.main === module) {
      const port = parseInt(process.env.PORT || '5000', 10);
-     app.listen(port, function () {
+     const server = app.listen(port, function () {
           console.log('TurboTables demo listening on port ' + port + (isDevelopment ? ' (development)' : ''));
+          console.log('Simulated API delay (DEMO_DELAY_MS): ' + customerApi.delayMs + ' ms');
+     });
+     server.on('error', function (err) {
+          if (err.code === 'EADDRINUSE')
+               console.error('Port ' + port + ' is already in use. Is another TurboTables instance (or "npm run dev") still running? Stop it, or set PORT.');
+          else
+               console.error(err);
+          process.exit(1);
      });
 }
 

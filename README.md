@@ -2,6 +2,15 @@
 
 A small, dependency-free JavaScript library that adds **server-side paging, sorting and filtering** controls (plus client-side search of the current page) to an HTML table styled with **Bootstrap 5** and **Font Awesome 7**.
 
+What it adds around your table:
+
+* **Toolbar (above):** "Showing x to y of z entries" on the left and a search box for the current page on the right. With `showFilter: true`, a **Filter** button on the left opens inline filter controls (column, value, Apply, Clear). While they are closed, an applied filter is shown as a removable chip, e.g. `Last Name: Duck ×`.
+* **Header:** sortable columns get a faint sort icon; the active column shows its direction in the primary colour.
+* **Pager (below):** First / Previous / Next / Last on the left, Jump to page in the middle, Page size on the right.
+* **Loading:** the table is dimmed with a spinner over it while data loads.
+
+Colours come from Bootstrap 5.3's CSS variables, so the controls follow light/dark mode and Bootswatch themes.
+
 This repository contains:
 
 | Path | What it is |
@@ -59,7 +68,8 @@ Reference the files from your layout or view. TurboTables needs Bootstrap 5 CSS 
 * Put the `colHeaders` class (configurable) on the header `tr`. If no row has it, the first `thead` row is used.
 * Mark the header cells you want to sort or filter on with `sortable` / `filterable`.
 * Name each column with `data-column` (the server-side property name). An `id` still works, but ids must be unique on the page.
-* The controls are inserted before and after the nearest `.row` that contains the table (or the `container` option).
+* The toolbar and pager are inserted before and after the nearest `.row` that contains the table (or the `container` option).
+* The table is wrapped in a `div.tt-wrapper` (for the loading overlay) and gets the `tt-table` class (header styling). Pass `classes: { table: '' }` to skip the header styling.
 
 ### 2. Script
 
@@ -107,13 +117,13 @@ If you render rows with Handlebars, use `{{value}}` (HTML-escaped). Never use `{
 | `pageSize` | `10` | `-1` means "All". Added to the page-size list if it isn't already there |
 | `pagerSizeOptions` | `[[10,25,50,-1],[10,25,50,'All']]` | `[values, labels]` |
 | `sortColumn` / `sortDirection` | `'Id'` / `'asc'` | Direction is case-insensitive and is always sent lowercase |
-| `showFilter` | `false` | Shows the filter icon and filter row |
+| `showFilter` | `false` | Shows the Filter button, filter panel and filter chip |
 | `columnHeaderClass` | `'colHeaders'` | |
-| `spinnerSource` | none | Image URL. Without it a Bootstrap `spinner-border` is shown |
+| `spinnerSource` | none | Image URL shown in the loading overlay. Without it a Bootstrap `spinner-border` is shown |
 | `tableInfoTemplate` | `'Showing {0} to {1} of {2} entries'` | |
 | `container` | nearest `.row` | Element (or id) the controls are placed around |
-| `classes` | Bootstrap 5 classes | Override any generated element's classes, e.g. `{ pagerButton: 'btn btn-dark' }` |
-| `icons` | Font Awesome 7 | `{ filter, sortAsc, sortDesc }` |
+| `classes` | Bootstrap 5 classes | Override any generated element's classes, e.g. `{ pagerButton: 'btn btn-outline-primary' }`. Keys are listed in `DEFAULT_CLASSES` at the top of `turbotables.js` |
+| `icons` | Font Awesome 7 | `{ filter, search, sortNone, sortAsc, sortDesc }`. Set `sortNone: ''` to hide the neutral sort icon |
 
 ### Methods
 
@@ -145,12 +155,12 @@ Requires Node.js 20 or later.
 ```
 cd TurboTables
 npm install
-npm run dev          # http://localhost:5000, restarts on file changes
+npm run dev          # http://localhost:5000, restarts on file changes (settings in dev.env)
 npm test             # Vitest + jsdom (run from PowerShell; Vitest fails to start in Git Bash)
 npm run build        # rebuild dist/
 ```
 
-In VS Code use **Run > Start Debugging** (F5), which uses `.vscode/launch.json` (sets `NODE_ENV=development` and a 500 ms simulated delay so the spinner is visible). Stop it with **Shift+F5**.
+In VS Code use **Run > Start Debugging** (F5). Both F5 and `npm run dev` load `TurboTables/dev.env` (`NODE_ENV=development`, port 5000 and a 1.5 second simulated delay so the loading overlay is visible); variables already set in your environment win. Stop the debugger with **Shift+F5**, and a terminal `npm run dev` with **Ctrl+C**. Only run one instance at a time: on Windows a second copy can start on the same port without an error, and the browser keeps talking to the first one.
 
 Environment variables:
 

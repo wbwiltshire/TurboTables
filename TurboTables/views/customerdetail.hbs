@@ -1,14 +1,20 @@
-<h1>{{title}}</h1>
-{{#with customer}}
-<dl class="row col-md-6">
-     <dt class="col-sm-4">Id</dt>
-     <dd class="col-sm-8">{{Id}}</dd>
-     <dt class="col-sm-4">First Name</dt>
-     <dd class="col-sm-8">{{FirstName}}</dd>
-     <dt class="col-sm-4">Last Name</dt>
-     <dd class="col-sm-8">{{LastName}}</dd>
-     <dt class="col-sm-4">E-Mail</dt>
-     <dd class="col-sm-8">{{EMail}}</dd>
-</dl>
-{{/with}}
-<a href="/pager" class="btn btn-primary">Back</a>
+<div class="page-header">
+     <h1>{{title}}</h1>
+     <a href="/pager" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to customers</a>
+</div>
+<div class="card col-lg-6">
+     <div class="card-body">
+          {{#with customer}}
+          <dl class="row mb-0">
+               <dt class="col-sm-4 text-body-secondary fw-normal">Id</dt>
+               <dd class="col-sm-8">{{Id}}</dd>
+               <dt class="col-sm-4 text-body-secondary fw-normal">First name</dt>
+               <dd class="col-sm-8">{{FirstName}}</dd>
+               <dt class="col-sm-4 text-body-secondary fw-normal">Last name</dt>
+               <dd class="col-sm-8">{{LastName}}</dd>
+               <dt class="col-sm-4 text-body-secondary fw-normal">E-mail</dt>
+               <dd class="col-sm-8 mb-0">{{EMail}}</dd>
+          </dl>
+          {{/with}}
+     </div>
+</div>

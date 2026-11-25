@@ -1,23 +1,31 @@
-<h1>{{title}}</h1>
-{{#with customer}}
-<form id="createForm" class="col-md-6" novalidate>
-     <ul id="formErrors" class="alert alert-danger ps-4" role="alert" hidden></ul>
-     <div class="mb-3">
-          <label for="FirstName" class="form-label">First Name</label>
-          <input name="FirstName" id="FirstName" type="text" class="form-control" maxlength="50" required value="{{FirstName}}" />
+<div class="page-header">
+     <h1>{{title}}</h1>
+</div>
+<div class="card col-lg-6">
+     <div class="card-body">
+          {{#with customer}}
+          <form id="createForm" novalidate>
+               <ul id="formErrors" class="alert alert-danger ps-4" role="alert" hidden></ul>
+               <div class="mb-3">
+                    <label for="FirstName" class="form-label">First name</label>
+                    <input name="FirstName" id="FirstName" type="text" class="form-control" maxlength="50" required value="{{FirstName}}" />
+               </div>
+               <div class="mb-3">
+                    <label for="LastName" class="form-label">Last name</label>
+                    <input name="LastName" id="LastName" type="text" class="form-control" maxlength="50" required value="{{LastName}}" />
+               </div>
+               <div class="mb-4">
+                    <label for="EMail" class="form-label">E-mail</label>
+                    <input name="EMail" id="EMail" type="email" class="form-control" maxlength="100" required value="{{EMail}}" />
+               </div>
+               <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="/pager" class="btn btn-outline-secondary">Cancel</a>
+               </div>
+          </form>
+          {{/with}}
      </div>
-     <div class="mb-3">
-          <label for="LastName" class="form-label">Last Name</label>
-          <input name="LastName" id="LastName" type="text" class="form-control" maxlength="50" required value="{{LastName}}" />
-     </div>
-     <div class="mb-3">
-          <label for="EMail" class="form-label">E-Mail</label>
-          <input name="EMail" id="EMail" type="email" class="form-control" maxlength="100" required value="{{EMail}}" />
-     </div>
-     <button type="submit" class="btn btn-primary">Save</button>
-     <a href="/customer" class="btn btn-secondary">Back</a>
-</form>
-{{/with}}
+</div>
 {{#contentFor 'pageScripts'}}
 <script src="/javascripts/ajaxcommon.js"></script>
 <script src="/javascripts/customeradd.js"></script>

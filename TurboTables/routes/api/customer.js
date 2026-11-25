@@ -13,6 +13,7 @@ const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 
 // Optional simulated network latency so the spinner can be seen (DEMO_DELAY_MS).
 const delayMs = Math.max(0, parseInt(process.env.DEMO_DELAY_MS || '0', 10) || 0);
+router.delayMs = delayMs;
 function delay() {
      return new Promise(function (resolve) { setTimeout(resolve, delayMs); });
 }

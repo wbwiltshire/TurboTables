@@ -111,6 +111,21 @@ describe('pages', () => {
           expect(html).toContain('&lt;script&gt;');
      });
 
+     it('renders the home page with demo links, the GitHub link and the version', async () => {
+          const html = await (await get('/')).text();
+          for (const href of ['/pager', '/customer', '/customer/add', '/customer/3', 'https://github.com/wbwiltshire/TurboTables'])
+               expect(html).toContain('href="' + href + '"');
+          expect(html).toContain('gh/wbwiltshire/TurboTables@v' + require('../package.json').version);
+          expect(html).toMatch(/\d+ customers\)/);
+     });
+
+     it('renders the about page with version and project links, without exact server versions', async () => {
+          const html = await (await get('/about')).text();
+          expect(html).toContain('v' + require('../package.json').version);
+          expect(html).toContain('href="https://github.com/wbwiltshire/TurboTables/blob/master/CHANGELOG.md"');
+          expect(html).not.toContain(process.version);
+     });
+
      it('sends security headers and hides x-powered-by', async () => {
           const res = await get('/');
           expect(res.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");

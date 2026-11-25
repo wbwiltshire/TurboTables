@@ -1,27 +1,112 @@
 /*! TurboTables v1.0.0 | Apache-2.0 */
-.tt-spinner {
-     position: fixed;
-     top: 50%;
-     left: 50%;
-     transform: translate(-50%, -50%);
-     z-index: 1080;
+/* Colours come from Bootstrap 5.3 CSS variables, so light/dark modes and Bootswatch themes apply. */
+
+/* ---- Table ---------------------------------------------------------- */
+.tt-table > thead th {
+     background-color: var(--bs-tertiary-bg);
+     color: var(--bs-emphasis-color);
+     font-size: 0.8125rem;
+     font-weight: 600;
+     letter-spacing: 0.01em;
+     white-space: nowrap;
+     vertical-align: middle;
+     border-bottom: 2px solid var(--bs-border-color);
 }
-.tt-spinner img {
-     max-width: 128px;
+.tt-table > tbody > tr > td {
+     vertical-align: middle;
 }
+
+/* ---- Sorting -------------------------------------------------------- */
 .tt-sortable {
      cursor: pointer;
      user-select: none;
 }
 .tt-sortable a {
+     color: inherit;
      text-decoration: none;
 }
-.tt-search {
-     max-width: 16rem;
+.tt-sortable:hover a,
+.tt-sortable a:focus-visible {
+     color: var(--bs-primary);
+}
+.tt-sort-icon {
+     margin-left: 0.375rem;
+     font-size: 0.75em;
+     opacity: 0.3;
+}
+.tt-sortable:hover .tt-sort-icon {
+     opacity: 0.6;
+}
+.tt-sort-icon.tt-sort-active {
+     opacity: 1;
+     color: var(--bs-primary);
+}
+
+/* ---- Toolbar, filter panel and chips --------------------------------- */
+.input-group.tt-search {
+     width: 16rem;
+     max-width: 100%;
+}
+.tt-search .input-group-text {
+     color: var(--bs-secondary-color);
+     background-color: var(--bs-body-bg);
+}
+.tt-filter-panel[hidden],
+.tt-chips[hidden] {
+     display: none !important;
+}
+.tt-filter-value {
+     width: 12rem;
+     max-width: 100%;
+}
+.tt-chip {
+     display: inline-flex;
+     align-items: center;
+     gap: 0.5rem;
+     padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+     font-size: 0.8125rem;
+     line-height: 1.25;
+     color: var(--bs-primary-text-emphasis);
+     background-color: var(--bs-primary-bg-subtle);
+     border: 1px solid var(--bs-primary-border-subtle);
+     border-radius: 50rem;
+}
+.tt-chip .btn-close {
+     width: 0.5em;
+     height: 0.5em;
+     font-size: 0.625rem;
+}
+
+/* ---- Pager ---------------------------------------------------------- */
+.tt-info,
+.tt-label {
+     font-size: 0.875rem;
+     color: var(--bs-secondary-color);
+}
+.input-group.tt-jump {
+     flex: 0 0 auto;
 }
 .tt-jump-input {
-     max-width: 5.5rem;
+     max-width: 4.5rem;
 }
-.tt-filter-toggle {
-     line-height: 1;
+
+/* ---- Loading overlay ------------------------------------------------ */
+.tt-wrapper {
+     position: relative;
+}
+.tt-overlay {
+     position: absolute;
+     inset: 0;
+     z-index: 5;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     background-color: rgba(var(--bs-body-bg-rgb, 255, 255, 255), 0.65);
+     border-radius: var(--bs-border-radius);
+}
+.tt-overlay[hidden] {
+     display: none;
+}
+.tt-overlay img {
+     max-width: 64px;
 }

@@ -1,19 +1,20 @@
-<h1>{{title}}</h1>
-<div class="row mb-3">
-     <div class="col-md-12">
-          <a id="add" class="btn btn-primary" href="/customer/add">Add</a>
-          <a id="refresh" class="btn btn-primary" href="#">Refresh</a>
-     </div>
+<div class="page-header">
+     <h1>{{title}}</h1>
 </div>
-<div id="spinner" class="tt-spinner" role="status" hidden>
-     <img src="/images/spinner-128.gif" alt="Loading..." />
+<div class="d-flex gap-2 mb-3">
+     <a id="add" class="btn btn-primary" href="/customer/add"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add</a>
+     <a id="refresh" class="btn btn-primary" href="#"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</a>
 </div>
-<div class="row">
-     <div class="col-md-12">
-          <table id="ajaxGrid" class="table table-striped table-bordered table-hover table-sm">
+<p class="text-body-secondary">A plain table without TurboTables, for comparison. See <a href="/pager">Customers</a> for paging, sorting and filtering.</p>
+<div id="spinner" class="page-spinner" role="status" hidden>
+     <div class="spinner-border text-primary"><span class="visually-hidden">Loading...</span></div>
+</div>
+<div class="card">
+     <div class="card-body">
+          <table id="ajaxGrid" class="table table-hover table-sm mb-0">
                <thead>
                     <tr>
-                         <th>ID</th>
+                         <th>Id</th>
                          <th>First Name</th>
                          <th>Last Name</th>
                          <th>E-Mail</th>
@@ -30,11 +31,6 @@
                     {{/each}}
                </tbody>
           </table>
-     </div>
-</div>
-<div class="row mt-3">
-     <div class="col-lg-4">
-          <a href="/" class="btn btn-primary">Back</a>
      </div>
 </div>
 <script id="customerListHGrid" type="text/x-handlebars-template">

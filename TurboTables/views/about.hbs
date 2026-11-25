@@ -1,2 +1,103 @@
-<h1>{{title}}</h1>
-<p>RESTful Nodes.js starter website using Express and Handlebars (version: {{version}})</p>
+<div class="page-header">
+     <h1>{{title}}</h1>
+</div>
+
+<div class="row g-3 mb-4">
+     <div class="col-lg-8">
+          <div class="card h-100">
+               <div class="card-body p-4">
+                    <h2 class="h5 fw-semibold mb-3">What is TurboTables?</h2>
+                    <p>
+                         TurboTables is a small JavaScript library that turns a plain HTML table into a paged, sortable,
+                         searchable and (optionally) filterable view of server-side data. It was built for line-of-business
+                         web applications, where tables of records are the heart of most pages.
+                    </p>
+                    <p class="text-body-secondary">
+                         It doesn't fetch or render data itself. You keep your own API and your own row templates
+                         (Handlebars in this demo); TurboTables owns the controls and the state, and tells your code when
+                         to load a different page, sort or filter.
+                    </p>
+
+                    <h3 class="section-title mt-4">How it works</h3>
+                    <ol class="steps list-unstyled mb-0">
+                         <li>
+                              <span class="step-number">1</span>
+                              <div><span class="fw-semibold">Mark up your table.</span>
+                                   <span class="text-body-secondary">Flag the headers as <code>sortable</code> or <code>filterable</code> and give the table its total row count.</span></div>
+                         </li>
+                         <li>
+                              <span class="step-number">2</span>
+                              <div><span class="fw-semibold">Attach TurboTables.</span>
+                                   <span class="text-body-secondary">It adds the search box, sort icons, pager, page-size selector and loading overlay.</span></div>
+                         </li>
+                         <li>
+                              <span class="step-number">3</span>
+                              <div><span class="fw-semibold">Load the data.</span>
+                                   <span class="text-body-secondary">When the user pages, sorts or filters, your data loader is called with the new state and a ready-made query string.</span></div>
+                         </li>
+                         <li>
+                              <span class="step-number">4</span>
+                              <div><span class="fw-semibold">Report back.</span>
+                                   <span class="text-body-secondary">Call <code>endDataBinding(totalItems)</code> and the pager, counts and overlay update.</span></div>
+                         </li>
+                    </ol>
+               </div>
+          </div>
+     </div>
+
+     <div class="col-lg-4 d-flex flex-column gap-3">
+          <div class="card">
+               <div class="card-body">
+                    <h2 class="section-title">Release</h2>
+                    <dl class="about-facts mb-0">
+                         <dt>Version</dt><dd><span class="badge rounded-pill text-bg-primary">v{{version}}</span></dd>
+                         <dt>License</dt><dd>Apache 2.0</dd>
+                         <dt>Size</dt><dd>~16 KB minified</dd>
+                         <dt>Dependencies</dt><dd>None</dd>
+                         <dt>Browsers</dt><dd>Current Edge, Chrome, Firefox and Safari</dd>
+                    </dl>
+               </div>
+          </div>
+          <div class="card">
+               <div class="card-body">
+                    <h2 class="section-title">Links</h2>
+                    <div class="list-group list-group-flush about-links">
+                         <a class="list-group-item list-group-item-action" href="https://github.com/wbwiltshire/TurboTables"><i class="fa-brands fa-github fa-fw" aria-hidden="true"></i> Source code on GitHub</a>
+                         <a class="list-group-item list-group-item-action" href="https://github.com/wbwiltshire/TurboTables#usage"><i class="fa-solid fa-book fa-fw" aria-hidden="true"></i> Usage guide</a>
+                         <a class="list-group-item list-group-item-action" href="https://github.com/wbwiltshire/TurboTables/blob/master/CHANGELOG.md"><i class="fa-solid fa-clock-rotate-left fa-fw" aria-hidden="true"></i> Changelog</a>
+                         <a class="list-group-item list-group-item-action" href="https://github.com/wbwiltshire/TurboTables/blob/master/LICENSE"><i class="fa-solid fa-scale-balanced fa-fw" aria-hidden="true"></i> License</a>
+                    </div>
+               </div>
+          </div>
+     </div>
+</div>
+
+<h2 class="section-title">Built with</h2>
+<div class="row row-cols-1 row-cols-md-2 g-3">
+     <div class="col">
+          <div class="card h-100">
+               <div class="card-body">
+                    <h3 class="h6 fw-semibold"><i class="fa-solid fa-cube text-primary me-2" aria-hidden="true"></i>The library</h3>
+                    <ul class="tech-list list-unstyled mb-0">
+                         <li><span>Plain JavaScript</span><span class="text-body-secondary">no jQuery or framework needed</span></li>
+                         <li><span>Bootstrap 5.3</span><span class="text-body-secondary">layout, controls and colour variables</span></li>
+                         <li><span>Font Awesome 7</span><span class="text-body-secondary">filter, search and sort icons</span></li>
+                         <li><span>jsDelivr + LibMan</span><span class="text-body-secondary">versioned releases from GitHub tags</span></li>
+                    </ul>
+               </div>
+          </div>
+     </div>
+     <div class="col">
+          <div class="card h-100">
+               <div class="card-body">
+                    <h3 class="h6 fw-semibold"><i class="fa-solid fa-server text-primary me-2" aria-hidden="true"></i>This demo</h3>
+                    <ul class="tech-list list-unstyled mb-0">
+                         <li><span>Node.js and Express 5</span><span class="text-body-secondary">pages and the customer API</span></li>
+                         <li><span>Handlebars 4.7</span><span class="text-body-secondary">server pages and client row templates</span></li>
+                         <li><span>Vitest and jsdom</span><span class="text-body-secondary">library and API tests</span></li>
+                         <li><span>Sample data</span><span class="text-body-secondary">{{customerCount}} customers, held in memory</span></li>
+                    </ul>
+               </div>
+          </div>
+     </div>
+</div>

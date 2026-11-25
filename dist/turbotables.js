@@ -11,6 +11,7 @@
  *   isCurrentRequest(requestId)        false when a newer request has started since requestId
  *   refresh()                          re-request the current page
  *   buildQueryString([extraParams])    URL-encoded page/pageSize/sortColumn/direction/filterColumn/filterValue
+ *   goToPage(n), getLastPage()
  *   getPage(), getPageSize(), getSortColumn(), getSortDirection(), getFilterColumn(), getFilterValue()
  *   showSpinner(show)
  */
@@ -25,36 +26,46 @@
 
      var VERSION = '1.0.0';
 
+     // Bootstrap 5 classes for every generated element. Override any of them with options.classes.
      var DEFAULT_CLASSES = {
-          toolbarRow: 'row align-items-center g-2 mb-2',
-          infoColumn: 'col-sm-6 d-flex align-items-center gap-2',
+          table: 'tt-table',
+          wrapper: 'tt-wrapper',
+          overlay: 'tt-overlay',
+          spinnerBorder: 'spinner-border text-primary',
+          toolbar: 'tt-toolbar d-flex flex-wrap align-items-center gap-2 mb-2',
+          toolbarStart: 'd-flex flex-wrap align-items-center gap-2 me-auto',
           info: 'tt-info',
-          searchColumn: 'col-sm-6 d-flex justify-content-sm-end',
-          searchInput: 'form-control form-control-sm tt-search',
-          filterToggle: 'btn btn-link btn-sm p-0 tt-filter-toggle',
-          filterRow: 'row align-items-center g-2 mb-2',
-          filterSelect: 'form-select form-select-sm',
-          filterInput: 'form-control form-control-sm',
+          searchGroup: 'input-group input-group-sm tt-search',
+          searchIcon: 'input-group-text',
+          searchInput: 'form-control',
+          filterToggle: 'btn btn-sm btn-outline-secondary tt-filter-toggle',
+          filterPanel: 'tt-filter-panel d-flex flex-wrap align-items-center gap-2',
+          filterSelect: 'form-select form-select-sm w-auto',
+          filterInput: 'form-control form-control-sm tt-filter-value',
           filterButton: 'btn btn-sm btn-primary',
           clearFilterButton: 'btn btn-sm btn-outline-secondary',
-          pagerRow: 'row align-items-center g-2 mt-1',
+          chips: 'tt-chips d-inline-flex flex-wrap gap-2',
+          chip: 'tt-chip',
+          chipRemove: 'btn-close',
+          pager: 'tt-pager d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2',
           pagerButtonGroup: 'btn-group btn-group-sm',
           pagerButton: 'btn btn-primary',
-          jumpGroup: 'input-group input-group-sm tt-jump',
+          jumpGroup: 'input-group input-group-sm w-auto tt-jump',     // w-auto: .input-group is width:100% by default
           jumpButton: 'btn btn-primary',
           jumpInput: 'form-control tt-jump-input',
-          pageSizeColumn: 'col-md-4 d-flex justify-content-md-end align-items-center gap-2',
-          pageSizeLabel: 'form-label mb-0 text-nowrap',
+          pageSizeGroup: 'tt-page-size d-flex align-items-center gap-2',
+          pageSizeLabel: 'tt-label mb-0 text-nowrap',
           pageSizeSelect: 'form-select form-select-sm w-auto',
-          spinner: 'tt-spinner',
-          spinnerBorder: 'spinner-border text-primary',
           sortable: 'tt-sortable',
-          sortIcon: 'tt-sort-icon ms-1'
+          sortIcon: 'tt-sort-icon',
+          sortIconActive: 'tt-sort-active'
      };
 
      // Font Awesome 7 (free) class names. Override with options.icons for other icon sets.
      var DEFAULT_ICONS = {
-          filter: 'fa-solid fa-filter fa-lg',
+          filter: 'fa-solid fa-filter',
+          search: 'fa-solid fa-magnifying-glass',
+          sortNone: 'fa-solid fa-sort',
           sortAsc: 'fa-solid fa-sort-up',
           sortDesc: 'fa-solid fa-sort-down'
      };
@@ -80,6 +91,10 @@
           return String(direction || 'asc').toLowerCase() === 'desc' ? 'desc' : 'asc';
      }
 
+     function addClasses(node, classes) {
+          String(classes || '').split(/\s+/).forEach(function (c) { if (c) node.classList.add(c); });
+     }
+
      // el('button', { className: 'btn', type: 'button', text: 'First' }, [children])
      function el(tag, props, children) {
           var node = document.createElement(tag);
@@ -93,8 +108,14 @@
                else if (key === 'hidden') node.hidden = true;
                else node.setAttribute(key, value === true ? '' : value);
           }
-          (children || []).forEach(function (child) { if (child) node.appendChild(child); });
+          (children || []).forEach(function (child) {
+               if (child) node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+          });
           return node;
+     }
+
+     function icon(classes) {
+          return classes ? el('i', { className: classes, 'aria-hidden': 'true' }) : null;
      }
 
      function TurboTablesLib(options) {
@@ -127,7 +148,9 @@
           this.icons = assign({}, DEFAULT_ICONS, options.icons);
           this.dataBinder = function () { };
           this.requestId = 0;
+          this.lastRequestedPageSize = Infinity;     // no request yet
           this.elements = {};
+          this.columnLabels = {};
 
           // Generated element ids are prefixed with the table id so several tables can share a page.
           var prefix = this.tableId + '-';
@@ -139,6 +162,7 @@
           this.filterValueInputId = prefix + 'filterValue';
           this.filterFilterButtonId = prefix + 'filterButton';
           this.clearFilterButtonId = prefix + 'clearFilterButton';
+          this.chipsId = prefix + 'chips';
           this.firstButtonId = prefix + 'first';
           this.prevButtonId = prefix + 'prev';
           this.nextButtonId = prefix + 'next';
@@ -150,11 +174,12 @@
 
           this.totalItems = Math.max(0, toInt(this.table.getAttribute(this.totalItemsAttribute), 0));
 
-          // Controls are placed around the nearest Bootstrap .row containing the table.
+          // Toolbar and pager are placed around the nearest Bootstrap .row containing the table.
           this.container = (options.container && (typeof options.container === 'string' ? document.getElementById(options.container) : options.container))
                || this.table.closest('.row')
                || this.table.parentNode;
 
+          addClasses(this.table, this.classes.table);
           this.CreateSearchAndFilterRows();
           this.CreatePagingControls();
           this.EnableColumnSortingAndFiltering();
@@ -179,6 +204,14 @@
                return false;
           this.totalItems = Math.max(0, toInt(totalItems, 0));
           this.table.setAttribute(this.totalItemsAttribute, String(this.totalItems));
+
+          // "All" asks for the total known when the request started. If the total has since grown
+          // (e.g. a filter was cleared), that request returned too few rows, so ask again.
+          if (this.requestedPageSize === -1 && this.totalItems > this.lastRequestedPageSize) {
+               this.refresh();
+               return true;
+          }
+
           this.ShowTableInfo();
           if (this.elements.searchInput && this.elements.searchInput.value)
                this.SearchTable();
@@ -192,8 +225,9 @@
 
      proto.refresh = function () {
           this.requestId++;
+          this.lastRequestedPageSize = this.getPageSize();
           this.showSpinner(true);
-          this.dataBinder(this.page, this.getPageSize(), this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue, this.requestId);
+          this.dataBinder(this.page, this.lastRequestedPageSize, this.sortColumn, this.sortDirection, this.filterColumn, this.filterValue, this.requestId);
           return this.requestId;
      };
 
@@ -229,8 +263,11 @@
           return Math.max(1, Math.ceil(this.totalItems / this.getPageSize()));
      };
 
+     // Dims the table and shows a spinner over it while data loads.
      proto.showSpinner = function (show) {
           if (this.elements.spinner) this.elements.spinner.hidden = !show;
+          if (show) this.table.setAttribute('aria-busy', 'true');
+          else this.table.removeAttribute('aria-busy');
      };
 
      // ---------------------------------------------------------------- navigation
@@ -272,6 +309,7 @@
           this.filterColumn = column;
           this.filterValue = value;
           this.page = 1;
+          this.UpdateFilterState();
           this.refresh();
      };
 
@@ -281,17 +319,39 @@
           this.filterValue = '';
           if (this.elements.filterSelect) this.elements.filterSelect.selectedIndex = 0;
           if (this.elements.filterInput) this.elements.filterInput.value = '';
+          this.UpdateFilterState();
           if (wasActive) {
                this.page = 1;
                this.refresh();
           }
      };
 
+     // Shows or hides the filter panel. An applied filter stays active (and visible as a chip)
+     // until it is cleared with the chip's remove button or the Clear button.
      proto.ToggleFilterRow = function () {
-          var row = this.elements.filterRow;
-          row.hidden = !row.hidden;
-          this.elements.filterToggle.setAttribute('aria-expanded', String(!row.hidden));
-          if (row.hidden) this.ClearFilterQuery();
+          var panel = this.elements.filterRow;
+          panel.hidden = !panel.hidden;
+          this.UpdateFilterState();
+          if (!panel.hidden) this.elements.filterSelect.focus();
+     };
+
+     proto.UpdateFilterState = function () {
+          var e = this.elements;
+          if (!e.filterRow) return;
+          var active = !!(this.filterColumn && this.filterValue);
+          e.filterToggle.classList.toggle('active', active || !e.filterRow.hidden);
+          e.filterToggle.setAttribute('aria-expanded', String(!e.filterRow.hidden));
+
+          // The chip stands in for the filter controls while they are closed.
+          e.chips.replaceChildren();
+          e.chips.hidden = !active || !e.filterRow.hidden;
+          if (e.chips.hidden) return;
+
+          var self = this;
+          var label = (this.columnLabels[this.filterColumn] || this.filterColumn) + ': ' + this.filterValue;
+          var remove = el('button', { type: 'button', className: this.classes.chipRemove, 'aria-label': 'Remove filter ' + label });
+          remove.addEventListener('click', function () { self.ClearFilterQuery(); });
+          e.chips.appendChild(el('span', { className: this.classes.chip }, [el('span', { text: label }), remove]));
      };
 
      // Client-side search: hides rows on the current page whose text doesn't contain the term.
@@ -318,17 +378,21 @@
           this.refresh();
      };
 
+     // Every sortable header shows an icon: a faint neutral one, or the active direction.
      proto.UpdateSortIndicators = function () {
-          var self = this;
+          var self = this, c = this.classes, icons = this.icons;
           this.headerCells.forEach(function (th) {
+               if (!th.classList.contains('sortable')) return;
                var existing = th.querySelector('.tt-sort-icon');
                if (existing) existing.parentNode.removeChild(existing);
-               th.removeAttribute('aria-sort');
-               if (self.columnKey(th) !== self.sortColumn || !th.classList.contains('sortable')) return;
+
+               var active = self.columnKey(th) === self.sortColumn;
                var asc = self.sortDirection === 'asc';
-               th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
-               var icon = el('i', { className: self.classes.sortIcon + ' ' + (asc ? self.icons.sortAsc : self.icons.sortDesc), 'aria-hidden': 'true' });
-               (th.querySelector('a') || th).appendChild(icon);
+               if (active) th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+               else th.removeAttribute('aria-sort');
+
+               var classes = c.sortIcon + ' ' + (active ? c.sortIconActive + ' ' + (asc ? icons.sortAsc : icons.sortDesc) : icons.sortNone);
+               (th.querySelector('a') || th).appendChild(icon(classes));
           });
      };
 
@@ -364,42 +428,50 @@
           this.container.parentNode.insertBefore(node, this.container);
      };
 
+     // Toolbar above the table, on one line:
+     //   [Filter] [column][value][Apply][Clear] | [chip]   Showing x to y of z ........ [Search]
+     // The filter controls open inline next to the Filter button; while they are closed an
+     // applied filter is shown as a removable chip.
      proto.CreateSearchAndFilterRows = function () {
           var self = this, c = this.classes, e = this.elements;
 
           e.info = el('span', { id: this.tableInfoId, className: c.info, 'aria-live': 'polite' });
-          if (this.showFilter) {
-               e.filterToggle = el('button', { type: 'button', id: this.filterIconId, className: c.filterToggle, title: 'Filter', 'aria-label': 'Toggle filter', 'aria-controls': this.filterId, 'aria-expanded': 'false' },
-                    [el('i', { className: this.icons.filter, 'aria-hidden': 'true' })]);
-               e.filterToggle.addEventListener('click', function () { self.ToggleFilterRow(); });
-          }
 
           e.searchInput = el('input', { type: 'search', id: this.searchInputId, className: c.searchInput, placeholder: 'Search this page', 'aria-label': 'Search this page' });
-          var searchForm = el('form', { role: 'search', className: c.searchColumn }, [e.searchInput]);
+          var searchForm = el('form', { role: 'search', className: c.searchGroup }, [
+               el('span', { className: c.searchIcon }, [icon(this.icons.search)]),
+               e.searchInput
+          ]);
           searchForm.addEventListener('submit', function (evt) { evt.preventDefault(); });
           e.searchInput.addEventListener('input', function () { self.SearchTable(); });
 
-          this.insertBefore(el('div', { className: c.toolbarRow }, [
-               el('div', { className: c.infoColumn }, [e.filterToggle, e.info]),
-               searchForm
-          ]));
+          var start = el('div', { className: c.toolbarStart });
 
-          if (!this.showFilter) return;
+          if (this.showFilter) {
+               e.filterToggle = el('button', { type: 'button', id: this.filterIconId, className: c.filterToggle, 'aria-controls': this.filterId, 'aria-expanded': 'false' },
+                    [icon(this.icons.filter), ' Filter']);
+               e.filterToggle.addEventListener('click', function () { self.ToggleFilterRow(); });
 
-          e.filterSelect = el('select', { id: this.selectFilterColumnId, className: c.filterSelect, 'aria-label': 'Filter column' },
-               [el('option', { value: '', text: 'Select a column', disabled: true, selected: true })]);
-          e.filterInput = el('input', { type: 'text', id: this.filterValueInputId, className: c.filterInput, placeholder: 'Value', 'aria-label': 'Filter value', maxlength: '100' });
-          var filterButton = el('button', { type: 'submit', id: this.filterFilterButtonId, className: c.filterButton, text: 'Filter' });
-          var clearButton = el('button', { type: 'button', id: this.clearFilterButtonId, className: c.clearFilterButton, text: 'Clear' });
+               e.filterSelect = el('select', { id: this.selectFilterColumnId, className: c.filterSelect, 'aria-label': 'Filter column' },
+                    [el('option', { value: '', text: 'Select a column', disabled: true, selected: true })]);
+               e.filterInput = el('input', { type: 'text', id: this.filterValueInputId, className: c.filterInput, placeholder: 'Value', 'aria-label': 'Filter value', maxlength: '100' });
+               var filterButton = el('button', { type: 'submit', id: this.filterFilterButtonId, className: c.filterButton, text: 'Apply' });
+               var clearButton = el('button', { type: 'button', id: this.clearFilterButtonId, className: c.clearFilterButton, text: 'Clear' });
 
-          e.filterRow = el('form', { id: this.filterId, className: c.filterRow, hidden: true }, [
-               el('div', { className: 'col-sm-3' }, [e.filterSelect]),
-               el('div', { className: 'col-sm-4' }, [e.filterInput]),
-               el('div', { className: 'col-sm-5 d-flex gap-2' }, [filterButton, clearButton])
-          ]);
-          e.filterRow.addEventListener('submit', function (evt) { evt.preventDefault(); self.FilterQuery(); });
-          clearButton.addEventListener('click', function () { self.ClearFilterQuery(); });
-          this.insertBefore(e.filterRow);
+               e.filterRow = el('form', { id: this.filterId, className: c.filterPanel, hidden: true, 'aria-label': 'Filter' },
+                    [e.filterSelect, e.filterInput, filterButton, clearButton]);
+               e.filterRow.addEventListener('submit', function (evt) { evt.preventDefault(); self.FilterQuery(); });
+               clearButton.addEventListener('click', function () { self.ClearFilterQuery(); });
+
+               e.chips = el('span', { id: this.chipsId, className: c.chips, hidden: true, 'aria-live': 'polite' });
+
+               start.appendChild(e.filterToggle);
+               start.appendChild(e.filterRow);
+               start.appendChild(e.chips);
+          }
+          start.appendChild(e.info);
+
+          this.insertBefore(el('div', { className: c.toolbar }, [start, searchForm]));
      };
 
      proto.CreatePagingControls = function () {
@@ -419,17 +491,16 @@
           e.pageSizeSelect = el('select', { id: this.selectPgSizerId, name: 'pageSizer', className: c.pageSizeSelect });
           this.PopulatePageSizeOptions();
 
-          var pagerRow = el('div', { className: c.pagerRow }, [
-               el('div', { className: 'col-md-5' }, [
-                    el('div', { className: c.pagerButtonGroup, role: 'group', 'aria-label': 'Pagination' }, [e.firstButton, e.prevButton, e.nextButton, e.lastButton])
-               ]),
-               el('div', { className: 'col-md-3' }, [el('div', { className: c.jumpGroup }, [e.jumpButton, e.jumpInput])]),
-               el('div', { className: c.pageSizeColumn }, [
-                    el('label', { className: c.pageSizeLabel, 'for': this.selectPgSizerId, text: 'Page size:' }),
+          // Pager below the table: buttons left, Jump in the middle, Page size right.
+          var pager = el('div', { className: c.pager }, [
+               el('div', { className: c.pagerButtonGroup, role: 'group', 'aria-label': 'Pagination' }, [e.firstButton, e.prevButton, e.nextButton, e.lastButton]),
+               el('div', { className: c.jumpGroup }, [e.jumpButton, e.jumpInput]),
+               el('div', { className: c.pageSizeGroup }, [
+                    el('label', { className: c.pageSizeLabel, 'for': this.selectPgSizerId, text: 'Page size' }),
                     e.pageSizeSelect
                ])
           ]);
-          this.container.parentNode.insertBefore(pagerRow, this.container.nextSibling);
+          this.container.parentNode.insertBefore(pager, this.container.nextSibling);
 
           e.firstButton.addEventListener('click', function () { self.FirstPage(); });
           e.prevButton.addEventListener('click', function () { self.PreviousPage(); });
@@ -474,32 +545,36 @@
           this.headerCells.forEach(function (th) {
                var column = self.columnKey(th);
                if (!column) return;
-               var classes = ' ' + th.className + ' ';
+               var label = th.textContent.trim() || column;
+               self.columnLabels[column] = label;
 
-               if (classes.indexOf(' sortable ') !== -1) {
-                    th.classList.add(self.classes.sortable);
+               if (th.classList.contains('sortable')) {
+                    addClasses(th, self.classes.sortable);
                     th.addEventListener('click', function (evt) {
                          evt.preventDefault();
                          self.ProcessSortEvent(column);
                     });
                }
 
-               if (self.showFilter && classes.indexOf(' filterable ') !== -1) {
-                    var label = th.textContent.trim() || column;
+               if (self.showFilter && th.classList.contains('filterable'))
                     self.elements.filterSelect.appendChild(el('option', { value: column, text: label }));
-               }
           });
 
           this.UpdateSortIndicators();
      };
 
+     // Wraps the table so the loading overlay can cover exactly the table.
      proto.AddSpinner = function () {
           var c = this.classes;
+          var wrapper = el('div', { className: c.wrapper });
+          this.table.parentNode.insertBefore(wrapper, this.table);
+          wrapper.appendChild(this.table);
+
           var content = this.spinnerSource
                ? el('img', { src: this.spinnerSource, alt: 'Loading...' })
-               : el('div', { className: c.spinnerBorder }, [el('span', { className: 'visually-hidden', text: 'Loading...' })]);
-          this.elements.spinner = el('div', { id: this.spinnerId, className: c.spinner, role: 'status', hidden: true }, [content]);
-          this.insertBefore(this.elements.spinner);
+               : el('div', { className: c.spinnerBorder, role: 'presentation' }, [el('span', { className: 'visually-hidden', text: 'Loading...' })]);
+          this.elements.spinner = el('div', { id: this.spinnerId, className: c.overlay, role: 'status', hidden: true }, [content]);
+          wrapper.appendChild(this.elements.spinner);
      };
 
      return TurboTablesLib;

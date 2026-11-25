@@ -1,8 +1,116 @@
-<h1>{{welcome}}</h1>
-<p>Welcome to the RESTful Node.js starter website using Express and Handlebars!</p>
+<section class="hero card mb-4">
+     <div class="card-body p-4 p-lg-5">
+          <div class="row align-items-center g-4">
+               <div class="col-lg-7">
+                    <span class="badge rounded-pill text-bg-primary mb-3">v{{version}}</span>
+                    <h1 class="display-6 fw-semibold mb-3">Paging, sorting and filtering for your HTML tables</h1>
+                    <p class="lead text-body-secondary mb-4">
+                         TurboTables adds a complete set of table controls to any Bootstrap 5 table, in one small
+                         dependency-free script. You keep your own API and templates; TurboTables handles the state.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                         <a class="btn btn-primary btn-lg" href="/pager"><i class="fa-solid fa-table-list" aria-hidden="true"></i> Try the demo</a>
+                         <a class="btn btn-outline-secondary btn-lg" href="https://github.com/wbwiltshire/TurboTables"><i class="fa-brands fa-github" aria-hidden="true"></i> View on GitHub</a>
+                    </div>
+               </div>
+               <div class="col-lg-5">
+                    <ul class="hero-stats list-unstyled mb-0">
+                         <li><span class="hero-stat-value">~16 KB</span><span class="hero-stat-label">minified, no dependencies</span></li>
+                         <li><span class="hero-stat-value">Bootstrap 5</span><span class="hero-stat-label">light and dark mode, Bootswatch themes</span></li>
+                         <li><span class="hero-stat-value">Any API</span><span class="hero-stat-label">you load the data, TurboTables tracks the state</span></li>
+                    </ul>
+               </div>
+          </div>
+     </div>
+</section>
 
-<ul> 
-    <li><a href="/customer">List of customers</a></li>
-    <li><a href="/pager">List of customers with paging</a></li>
-    <li><a href="/customer/3">Customer Warren Buffet (3)</a></li>
-</ul>
+<h2 class="section-title">Features</h2>
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 mb-4">
+     <div class="col">
+          <div class="card feature h-100"><div class="card-body">
+               <i class="fa-solid fa-book-open feature-icon" aria-hidden="true"></i>
+               <h3 class="h6 fw-semibold">Server-side paging</h3>
+               <p class="small text-body-secondary mb-0">First, Previous, Next, Last, Jump to page and a page-size selector, including "All".</p>
+          </div></div>
+     </div>
+     <div class="col">
+          <div class="card feature h-100"><div class="card-body">
+               <i class="fa-solid fa-arrow-down-wide-short feature-icon" aria-hidden="true"></i>
+               <h3 class="h6 fw-semibold">Column sorting</h3>
+               <p class="small text-body-secondary mb-0">Click a header to sort; click again to reverse. The active column and direction are always shown.</p>
+          </div></div>
+     </div>
+     <div class="col">
+          <div class="card feature h-100"><div class="card-body">
+               <i class="fa-solid fa-filter feature-icon" aria-hidden="true"></i>
+               <h3 class="h6 fw-semibold">Optional column filter</h3>
+               <p class="small text-body-secondary mb-0">Turn on <code>showFilter</code> to let users filter by column. An applied filter shows as a removable chip.</p>
+          </div></div>
+     </div>
+     <div class="col">
+          <div class="card feature h-100"><div class="card-body">
+               <i class="fa-solid fa-magnifying-glass feature-icon" aria-hidden="true"></i>
+               <h3 class="h6 fw-semibold">Instant search</h3>
+               <p class="small text-body-secondary mb-0">Narrow the rows on the current page as you type, with no round trip to the server.</p>
+          </div></div>
+     </div>
+     <div class="col">
+          <div class="card feature h-100"><div class="card-body">
+               <i class="fa-solid fa-circle-half-stroke feature-icon" aria-hidden="true"></i>
+               <h3 class="h6 fw-semibold">Fits your theme</h3>
+               <p class="small text-body-secondary mb-0">Built from Bootstrap 5.3 classes and colour variables, so it follows light/dark mode and Bootswatch themes.</p>
+          </div></div>
+     </div>
+     <div class="col">
+          <div class="card feature h-100"><div class="card-body">
+               <i class="fa-solid fa-shield-halved feature-icon" aria-hidden="true"></i>
+               <h3 class="h6 fw-semibold">Safe by default</h3>
+               <p class="small text-body-secondary mb-0">URL-encoded query strings, text-only rendering, and stale responses ignored when users click quickly.</p>
+          </div></div>
+     </div>
+</div>
+
+<div class="row g-3">
+     <div class="col-lg-7">
+          <h2 class="section-title">Get started</h2>
+          <div class="card">
+               <div class="card-body">
+                    <p class="small text-body-secondary mb-2">1. Install with LibMan (or copy the files from <code>dist/</code>):</p>
+<pre class="code-block mb-3"><code>{ "provider": "jsdelivr",
+  "library": "gh/wbwiltshire/TurboTables@v{{version}}",
+  "destination": "wwwroot/lib/turbotables/",
+  "files": [ "dist/turbotables.min.js", "dist/turbotables.min.css" ] }</code></pre>
+                    <p class="small text-body-secondary mb-2">2. Attach it to your table and supply a data loader:</p>
+<pre class="code-block mb-2"><code>const table = new TurboTablesLib({ tableId: 'CustomerTable', pageSize: 10 });
+table.setDataBinding(async (page, pageSize, sort, dir, fCol, fVal, requestId) =&gt; {
+    const response = await fetch('/api/customer/?' + table.buildQueryString());
+    const result = await response.json();
+    renderRows(result.customers);
+    table.endDataBinding(result.totalItems, requestId);
+});</code></pre>
+                    <a class="small" href="https://github.com/wbwiltshire/TurboTables#usage">Full usage guide on GitHub <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+               </div>
+          </div>
+     </div>
+     <div class="col-lg-5">
+          <h2 class="section-title">Explore the demo</h2>
+          <div class="list-group">
+               <a class="list-group-item list-group-item-action d-flex align-items-center gap-3" href="/pager">
+                    <i class="fa-solid fa-table-list text-primary" aria-hidden="true"></i>
+                    <span><span class="fw-semibold">Customers</span><br /><span class="small text-body-secondary">Paging, sorting, filtering and search ({{customerCount}} customers)</span></span>
+               </a>
+               <a class="list-group-item list-group-item-action d-flex align-items-center gap-3" href="/customer">
+                    <i class="fa-solid fa-list text-primary" aria-hidden="true"></i>
+                    <span><span class="fw-semibold">Simple list</span><br /><span class="small text-body-secondary">The same data in a plain table, for comparison</span></span>
+               </a>
+               <a class="list-group-item list-group-item-action d-flex align-items-center gap-3" href="/customer/add">
+                    <i class="fa-solid fa-user-plus text-primary" aria-hidden="true"></i>
+                    <span><span class="fw-semibold">Add a customer</span><br /><span class="small text-body-secondary">Then find them with sorting or the filter</span></span>
+               </a>
+               <a class="list-group-item list-group-item-action d-flex align-items-center gap-3" href="/customer/3">
+                    <i class="fa-solid fa-id-card text-primary" aria-hidden="true"></i>
+                    <span><span class="fw-semibold">Customer details</span><br /><span class="small text-body-secondary">Warren Buffett (3)</span></span>
+               </a>
+          </div>
+     </div>
+</div>

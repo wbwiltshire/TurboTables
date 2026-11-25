@@ -13,10 +13,9 @@
             ],
             "cwd": "${workspaceFolder}/TurboTables",
             "program": "${workspaceFolder}/TurboTables/app.js",
-            "env": {
-                "NODE_ENV": "development",
-                "DEMO_DELAY_MS": "500"
-            }
+            // Development settings (NODE_ENV, PORT, DEMO_DELAY_MS) come from TurboTables/dev.env
+            "runtimeArgs": ["--env-file=dev.env"],
+            "console": "integratedTerminal"
         }
     ]
 }

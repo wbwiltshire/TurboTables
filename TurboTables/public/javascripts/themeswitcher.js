@@ -1,36 +1,33 @@
-﻿// Bootswatch light/dark theme switcher. Loaded in <head> so the saved theme is applied
-// before first paint. Each theme keeps its own SRI hash.
+﻿// Light/dark mode using Bootstrap 5.3's data-bs-theme. Loaded in <head> so the saved
+// (or system-preferred) theme applies before first paint.
 (function () {
      'use strict';
-     var THEMES = {
-          Light: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.8/dist/cosmo/bootstrap.min.css', integrity: 'sha384-QOrayDhdkHbTAsh/gb0iGlDY/xHwI3sdDvyHkxnfpY20Y+Pa8aRHFXmLQYklmIx/', bsTheme: 'light' },
-          Dark: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.8/dist/slate/bootstrap.min.css', integrity: 'sha384-qhrBcipvKS9sQcI3lcoXpdKNs9jmQAunazzwZW3aZeuFMoRih2NYJIDsr6XTFndn', bsTheme: 'dark' }
-     };
      var KEY = 'turbotables-theme';
 
-     function saved() {
-          try { return localStorage.getItem(KEY) === 'Light' ? 'Light' : 'Dark'; } catch (e) { return 'Dark'; }
+     function preferred() {
+          try {
+               var saved = localStorage.getItem(KEY);
+               if (saved === 'light' || saved === 'dark') return saved;
+          } catch (e) { /* storage disabled */ }
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
      }
 
-     function apply(name) {
-          var theme = THEMES[name];
-          var link = document.getElementById('theme-style');
-          if (link && link.getAttribute('href') !== theme.href) {
-               // integrity must change before href so the new file is checked against its own hash
-               link.setAttribute('integrity', theme.integrity);
-               link.setAttribute('href', theme.href);
-          }
-          document.documentElement.setAttribute('data-bs-theme', theme.bsTheme);
+     function apply(theme) {
+          document.documentElement.setAttribute('data-bs-theme', theme);
           var toggle = document.getElementById('theme-toggle');
-          if (toggle) toggle.textContent = name === 'Light' ? 'Dark' : 'Light';
-          try { localStorage.setItem(KEY, name); } catch (e) { /* storage disabled */ }
+          if (!toggle) return;
+          var next = theme === 'dark' ? 'light' : 'dark';
+          toggle.querySelector('i').className = next === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+          toggle.querySelector('span').textContent = next === 'dark' ? 'Dark' : 'Light';
      }
 
-     apply(saved());
+     apply(preferred());
      document.addEventListener('DOMContentLoaded', function () {
-          apply(saved());
+          apply(preferred());
           document.getElementById('theme-toggle').addEventListener('click', function () {
-               apply(saved() === 'Light' ? 'Dark' : 'Light');
+               var theme = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+               try { localStorage.setItem(KEY, theme); } catch (e) { /* storage disabled */ }
+               apply(theme);
           });
      });
 }());

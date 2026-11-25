@@ -128,6 +128,33 @@ describe('paging', () => {
           expect(q('showing').textContent).toBe('Showing 0 to 0 of 0 entries');
      });
 
+     it('"All" re-requests when the total grows past the rows it asked for (clearing a filter)', () => {
+          const { table, binder, q } = create({}, 23);
+          const select = q('pageSize');
+          select.value = '-1';
+          select.dispatchEvent(new Event('change'));
+          expect(lastCall(binder)[1]).toBe(23);
+          table.endDataBinding(23, lastCall(binder)[6]);
+
+          q('filterColumn').value = 'Name';
+          q('filterValue').value = 'Duck';
+          table.FilterQuery();
+          table.endDataBinding(1, lastCall(binder)[6]);
+          expect(q('showing').textContent).toBe('Showing 1 to 1 of 1 entries');
+
+          table.ClearFilterQuery();
+          expect(lastCall(binder)[1]).toBe(1);                 // still sized by the filtered total...
+          const calls = binder.mock.calls.length;
+          expect(table.endDataBinding(23, lastCall(binder)[6])).toBe(true);
+          expect(binder.mock.calls.length).toBe(calls + 1);     // ...so it asks again for all 23
+          expect(lastCall(binder).slice(0, 2)).toEqual([1, 23]);
+          expect(q('spinner').hidden).toBe(false);
+          table.endDataBinding(23, lastCall(binder)[6]);
+          expect(binder.mock.calls.length).toBe(calls + 1);     // and stops there
+          expect(q('showing').textContent).toBe('Showing 1 to 23 of 23 entries');
+          expect(q('spinner').hidden).toBe(true);
+     });
+
      it('changing page size returns to page 1', () => {
           const { table, binder, q } = create();
           table.goToPage(4);
@@ -149,12 +176,51 @@ describe('paging', () => {
           expect(table.endDataBinding(95, second)).toBe(true);
      });
 
-     it('shows the spinner during a request and hides it afterwards', () => {
+     it('shows the loading overlay over the table during a request', () => {
           const { table, q } = create();
+          const overlay = q('spinner');
+          expect(overlay.parentNode).toBe(table.table.parentNode);
+          expect(overlay.parentNode.classList.contains('tt-wrapper')).toBe(true);
           table.goToPage(2);
-          expect(q('spinner').hidden).toBe(false);
+          expect(overlay.hidden).toBe(false);
+          expect(table.table.getAttribute('aria-busy')).toBe('true');
           table.endDataBinding(95);
-          expect(q('spinner').hidden).toBe(true);
+          expect(overlay.hidden).toBe(true);
+          expect(table.table.hasAttribute('aria-busy')).toBe(false);
+     });
+
+     it('uses spinnerSource as the overlay image when given', () => {
+          const { q } = create({ spinnerSource: '/images/spinner.gif' });
+          expect(q('spinner').querySelector('img').getAttribute('src')).toBe('/images/spinner.gif');
+     });
+
+     it('lays out the toolbar above (filter, info, search) and the pager below (buttons, jump, page size)', () => {
+          const { table, q } = create();
+          const toolbar = q('search').closest('.tt-toolbar');
+          expect(table.container.previousSibling).toBe(toolbar);
+          const start = toolbar.firstChild;
+          expect([...start.children].map(n => n.id)).toEqual(['T-filterIcon', 'T-filter', 'T-chips', 'T-showing']);
+          expect(toolbar.lastChild.contains(q('search'))).toBe(true);
+
+          const pager = q('first').closest('.tt-pager');
+          expect(table.container.nextSibling).toBe(pager);
+          expect(pager.children[0].contains(q('first'))).toBe(true);
+          expect(pager.children[1].contains(q('jump'))).toBe(true);
+          expect(pager.children[2].contains(q('pageSize'))).toBe(true);
+          expect(table.table.classList.contains('tt-table')).toBe(true);
+     });
+
+     it('omits the filter controls unless showFilter is set', () => {
+          const { q } = create({ showFilter: false });
+          expect(q('filterIcon')).toBeNull();
+          expect(q('chips')).toBeNull();
+          expect(q('showing')).not.toBeNull();
+     });
+
+     it('keeps hidden filter controls hidden despite Bootstrap display utilities', () => {
+          const css = require('node:fs').readFileSync(require.resolve('../public/stylesheets/turbotables.css'), 'utf8');
+          expect(css).toMatch(/\.tt-filter-panel\[hidden\][\s\S]*?display:\s*none\s*!important/);
+          expect(css).toMatch(/\.tt-chips\[hidden\]/);
      });
 });
 
@@ -170,10 +236,20 @@ describe('sorting', () => {
           const { table, binder } = create();
           document.getElementById('TId').click();
           expect(table.getSortDirection()).toBe('desc');
+          expect(document.querySelector('#TId .tt-sort-icon').classList.contains('fa-sort-down')).toBe(true);
           document.getElementById('TName').click();
           expect(lastCall(binder).slice(2, 4)).toEqual(['Name', 'asc']);
-          expect(document.getElementById('TId').querySelector('.tt-sort-icon')).toBeNull();
-          expect(document.querySelectorAll('.tt-sort-icon').length).toBe(1);
+          expect(document.getElementById('TId').hasAttribute('aria-sort')).toBe(false);
+          expect(document.querySelectorAll('.tt-sort-active').length).toBe(1);
+          expect(document.querySelector('#TName .tt-sort-icon').classList.contains('tt-sort-active')).toBe(true);
+     });
+
+     it('shows a neutral icon on every inactive sortable column and none on others', () => {
+          create();
+          expect(document.querySelectorAll('.tt-sort-icon').length).toBe(2);
+          expect(document.querySelector('#TName .tt-sort-icon').className).toContain('fa-sort');
+          expect(document.querySelector('#TName .tt-sort-icon').classList.contains('tt-sort-active')).toBe(false);
+          expect(document.querySelector('#TNotes .tt-sort-icon')).toBeNull();
      });
 
      it('works with whitespace before the header link and keeps the link text', () => {
@@ -229,17 +305,44 @@ describe('filtering', () => {
           expect(lastCall(binder)[4]).toBe('Name');
      });
 
-     it('hiding the filter row clears the active filter and re-queries', () => {
-          const { table, binder, q } = create();
+     it('shows an applied filter as a chip that survives hiding the panel', () => {
+          const { table, q } = create();
+          expect(q('chips').hidden).toBe(true);
           q('filterIcon').click();
           expect(q('filter').hidden).toBe(false);
+          expect(q('filterIcon').getAttribute('aria-expanded')).toBe('true');
           q('filterColumn').value = 'Name';
           q('filterValue').value = 'Duck';
           table.FilterQuery();
+          expect(q('chips').hidden).toBe(true);          // controls are open, so no chip yet
           q('filterIcon').click();
           expect(q('filter').hidden).toBe(true);
+          expect(table.getFilterColumn()).toBe('Name');
+          expect(q('chips').hidden).toBe(false);
+          expect(q('chips').textContent).toBe('Name: Duck');
+          expect(q('filterIcon').classList.contains('active')).toBe(true);
+     });
+
+     it('removing the chip clears the filter and re-queries', () => {
+          const { table, binder, q } = create();
+          q('filterColumn').value = 'Name';
+          q('filterValue').value = 'Duck';
+          table.FilterQuery();
+          q('chips').querySelector('button').click();
           expect(table.getFilterColumn()).toBe('');
           expect(lastCall(binder).slice(4, 6)).toEqual(['', '']);
+          expect(q('chips').hidden).toBe(true);
+          expect(q('filterIcon').classList.contains('active')).toBe(false);
+          expect(q('filterValue').value).toBe('');
+     });
+
+     it('chip text is inserted as text, not HTML', () => {
+          const { table, q } = create();
+          q('filterColumn').value = 'Name';
+          q('filterValue').value = '<img src=x onerror=alert(1)>';
+          table.FilterQuery();
+          expect(q('chips').querySelector('img')).toBeNull();
+          expect(q('chips').textContent).toContain('<img');
      });
 
      it('Clear does not re-query when no filter was applied', () => {
@@ -297,7 +400,8 @@ describe('buildQueryString', () => {
 describe('icons and classes', () => {
      it('uses Font Awesome 7 classes by default and allows overrides', () => {
           create({ icons: { sortAsc: 'bi bi-caret-up' }, classes: { pagerButton: 'btn btn-dark' } });
-          expect(document.querySelector('#T-filterIcon i').className).toBe('fa-solid fa-filter fa-lg');
+          expect(document.querySelector('#T-filterIcon i').className).toBe('fa-solid fa-filter');
+          expect(document.querySelector('.tt-search i').className).toBe('fa-solid fa-magnifying-glass');
           expect(document.querySelector('#TId .tt-sort-icon').classList.contains('bi-caret-up')).toBe(true);
           expect(document.getElementById('T-next').className).toBe('btn btn-dark');
      });
