@@ -185,15 +185,15 @@ Environment variables:
 
 Never move or re-push an existing tag. jsDelivr caches tagged files permanently.
 
-## Deploying the demo to DebServer1
+## Deploying the Demo to a Linux Server with Nginx Proxy Manager
 
-The demo runs as a systemd service on DebServer1. Nginx Proxy Manager (NPM), running in Docker on the same host, forwards to it on the Docker bridge at `172.17.0.1:8006`, so the app isn't reachable from the network directly. The unit file is [`Linux/turbotables.service`](Linux/turbotables.service). Requires Node.js 20 or later on the server.
+The demo runs as a systemd service on a Linux server (e.g. Debian). Nginx Proxy Manager (NPM), running in Docker on the same host, forwards to it on the Docker bridge at `172.17.0.1:8006`, so the app isn't reachable from the network directly. The unit file is [`Linux/turbotables.service`](Linux/turbotables.service). Requires Node.js 20 or later on the server.
 
 1. Build the release tarball on your workstation (PowerShell; Windows 10 and later include `tar`):
    ```
    cd TurboTables
    tar -czf turbotables-demo.tgz app.js config.js validation.js repository.js customer.json package.json package-lock.json public routes views
-   scp turbotables-demo.tgz ../Linux/turbotables.service debserver1:~
+   scp turbotables-demo.tgz ../Linux/turbotables.service <your-server>:~
    ```
 2. On the server, install into an empty folder (move any previous install aside first) and install only the runtime packages:
    ```
