@@ -1,28 +1,14 @@
 <h1>{{title}}</h1>
-<br />
-<div class="row">
-    <div class="row">
-        {{#with customer}}
-        <form id="Customer" class="col-xs-6 bg-success img-rounded">
-            <div>
-                <label class="col-xs-3 text-right">First Name:</label>
-                <label class="text-normal">{{FirstName}}</label>
-            </div>
-            <div>
-                <label class="col-xs-3 text-right">Last Name:</label>
-                <label class="text-normal">{{LastName}}</label>
-            </div>
-            <div>
-                <label class="col-xs-3 text-right">E-Mail:</label>
-                <label class="text-normal">{{EMail}}</label>
-            </div>
-        </form>
-        {{/with}}
-    </div>
-    <br />
-    <div class="row">
-        <div class="col-lg-4">
-            <a href="/customer" class="btn btn-primary">Back</a>
-        </div>
-    </div>
-</div>
+{{#with customer}}
+<dl class="row col-md-6">
+     <dt class="col-sm-4">Id</dt>
+     <dd class="col-sm-8">{{Id}}</dd>
+     <dt class="col-sm-4">First Name</dt>
+     <dd class="col-sm-8">{{FirstName}}</dd>
+     <dt class="col-sm-4">Last Name</dt>
+     <dd class="col-sm-8">{{LastName}}</dd>
+     <dt class="col-sm-4">E-Mail</dt>
+     <dd class="col-sm-8">{{EMail}}</dd>
+</dl>
+{{/with}}
+<a href="/pager" class="btn btn-primary">Back</a>

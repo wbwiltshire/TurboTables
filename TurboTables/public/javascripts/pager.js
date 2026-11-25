@@ -1,12 +1,16 @@
-$(document).ready(function () {
-     var baseUrl = '/api/';
+// TurboTables demo: server-side paging, sorting and filtering of the customer list.
+document.addEventListener('DOMContentLoaded', function () {
+     'use strict';
 
-     var customerTable = new TurboTablesLib({
+     const tbody = document.getElementById('CustomerList');
+     const tableElement = document.getElementById('CustomerTable');
+
+     const customerTable = new TurboTablesLib({
           tableId: 'CustomerTable',
           totalItemsAttribute: 'ctTotalItems',
           page: 1,
-          pageSize: 5,
-          pagerSizeOptions: [[ 5, 10, 25, -1 ], [ 5, 10, 25, 'All' ]],    
+          pageSize: parseInt(tableElement.dataset.pageSize, 10) || 5,
+          pagerSizeOptions: [[5, 10, 25, -1], [5, 10, 25, 'All']],
           sortColumn: 'Id',
           sortDirection: 'asc',
           columnHeaderClass: 'colHeaders',
@@ -14,49 +18,30 @@ $(document).ready(function () {
           spinnerSource: '/images/spinner-128.gif'
      });
 
-     customerTable.setDataBinding(CustomerList);
+     customerTable.setDataBinding(loadCustomers);
 
-     $('#refresh').click(function () {
-          CustomerList(customerTable.getPage(), customerTable.getPageSize(), customerTable.getSortColumn(), customerTable.getSortDirection(), customerTable.getFilterColumn(), customerTable.getFilterValue());
+     document.getElementById('refresh').addEventListener('click', function (evt) {
+          evt.preventDefault();
+          customerTable.refresh();
      });
 
-     function CustomerList(page, pageSize, sortColumn, direction, filterColumn, filterValue) {
-        var delay = 1000;
-        var requestString = '?page=' + page + '&pageSize=' + pageSize + '&sortColumn=' + sortColumn + '&direction=' + direction + '&filterColumn=' + filterColumn + '&filterValue=' + filterValue;
-        var url = baseUrl + 'customer/' + requestString;
-        var gridBodyId = 'CustomerList';
-        var template = 'customerListHGrid';
-        //simulate network delay
-        setTimeout(function () {
-             ajaxGet({
-                  url: url,
-                  success: function (result) {
-                       jsonresult = result;
-                       if (parseInt(result.totalItems, 10) > 0)
-                            bindGrid(gridBodyId, template, result.customers);
-                       else
-                            bindNoRecords(gridBodyId);
-                       customerTable.endDataBinding(result.totalItems);
-
-                  },
-                  error: function (result, status, xhr) {
-                       bindNoRecords(gridBodyId);
-                       customerTable.endDataBinding(0);                  }
-             });
-        }, delay);
-        
-    }
-
-    function bindGrid(grid, src, data) {
-        var result = '{"' + grid + '":' + JSON.stringify(data) + "}";
-        var source = $('#' + src).html();
-        var template = Handlebars.compile(source);
-        var html = template(JSON.parse(result));
-        $("#" + grid).html(html);
+     // Called by TurboTables with the table's state; requestId identifies this request.
+     async function loadCustomers(page, pageSize, sortColumn, direction, filterColumn, filterValue, requestId) {
+          const url = '/api/customer/?' + customerTable.buildQueryString();
+          try {
+               const result = await Demo.getJson(url);
+               if (!customerTable.isCurrentRequest(requestId)) return;   // a newer request superseded this one
+               if (result.totalItems > 0)
+                    tbody.innerHTML = Demo.renderTemplate('customerListHGrid', { CustomerList: result.customers });
+               else
+                    Demo.showNoRecords(tbody, 4);
+               customerTable.endDataBinding(result.totalItems, requestId);
+          }
+          catch (err) {
+               console.error(err);
+               if (!customerTable.isCurrentRequest(requestId)) return;
+               Demo.showNoRecords(tbody, 4);
+               customerTable.endDataBinding(0, requestId);   // always end binding so the spinner stops
+          }
      }
-
-    function bindNoRecords(grid) {
-         var html = '<tr id="noRecordsFound"><td class="lead text-left text-danger" colspan= "4">No Records Found!</td></tr>';
-         $("#" + grid).html(html);
-    }
 });

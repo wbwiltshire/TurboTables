@@ -1,51 +1,40 @@
-//Ajax library of common functions
-function ajaxGet(options) {
-    //Make the call un-cached
-    $.ajax({
-        url: options.url,
-        cache: false,
-        type: 'GET',
-        success: function (result) {
-            options.success(result);
-        },
-        error: function (result) {
-            displayError(result);
-        }
-    });
-}
+// Small fetch helpers shared by the demo pages (no jQuery needed).
+(function (root) {
+     'use strict';
 
-function ajaxPost(options) {
-    $.ajax({
-        url: options.url,
-        type: 'POST',
-        data: options.data,
-        dataType: options.dataType,
-        success: function (result, status, xhr) {
-            options.success(result, status, xhr);
-        },
-        error: function (result, status, xhr) {
-            // displayError(result, status);
-            options.error(result, status, xhr);
-        }
-    });
-}
+     async function getJson(url) {
+          const response = await fetch(url, { cache: 'no-store', headers: { Accept: 'application/json' } });
+          if (!response.ok) throw new Error('GET ' + url + ' failed: ' + response.status);
+          return response.json();
+     }
 
-function ajaxDelete(options) {
-    $.ajax({
-        url: options.url,
-        type: 'DELETE',
-        success: function (result, status, xhr) {
-            options.success(result, status, xhr);
-        },
-        error: function (result, status, xhr) {
-            // displayError(result, status);
-            options.error(result, status, xhr);
-        }
-    });
-}
+     async function postForm(url, form) {
+          const response = await fetch(url, {
+               method: 'POST',
+               headers: { Accept: 'application/json' },
+               body: new URLSearchParams(new FormData(form))
+          });
+          const body = await response.json().catch(function () { return {}; });
+          return { ok: response.ok, status: response.status, body: body };
+     }
 
-function displayError (result) {
-    $('#errorDisplay').css('visibility', 'visible');
-    $('#errorDisplay').show();
-    $('#errorDisplay').html(result.responseText);
-};
+     // Compiles each <script type="text/x-handlebars-template"> once and caches it.
+     // Handlebars {{ }} HTML-escapes values; never use {{{ }}} for data from the server.
+     const templates = {};
+     function renderTemplate(templateId, context) {
+          if (!templates[templateId])
+               templates[templateId] = Handlebars.compile(document.getElementById(templateId).innerHTML);
+          return templates[templateId](context);
+     }
+
+     function showNoRecords(tbody, columns) {
+          tbody.replaceChildren();
+          const row = tbody.insertRow();
+          const cell = row.insertCell();
+          cell.colSpan = columns;
+          cell.className = 'lead text-start text-danger';
+          cell.textContent = 'No Records Found!';
+     }
+
+     root.Demo = { getJson: getJson, postForm: postForm, renderTemplate: renderTemplate, showNoRecords: showNoRecords };
+}(window));

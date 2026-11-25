@@ -1,186 +1,241 @@
-﻿Turbo Tables implements basic paging, sorting, and filtering controls to a website using Node, Express, Handlebars, and Bootstrap.
-===
+﻿# TurboTables
 
-A simple javascript library which supports paging, sorting, and filtering table data using Node.js and the Express framework with Handlebars.js and Bootstrap
+A small, dependency-free JavaScript library that adds **server-side paging, sorting and filtering** controls (plus client-side search of the current page) to an HTML table styled with **Bootstrap 5** and **Font Awesome 7**.
 
-For more informaton:
-* [Node.js](http://Nodejs.org/)
-* [Express.js](http://Expressjs.com/)
-* [Handlebars.js](http://Handlebarsjs.com/)
-* [Bootstrap](https://getbootstrap.com/)
-* [NPM Check Updates](https://www.npmjs.com/package/npm-check-updates)
+This repository contains:
 
-Updated to Visual Studio Code
-* Remote references to Visual Studio (e.g. csproj)
+| Path | What it is |
+|---|---|
+| `dist/` | The released library files: `turbotables.js`, `turbotables.min.js` (+ source map), `turbotables.css`, `turbotables.min.css` |
+| `TurboTables/public/javascripts/turbotables.js` | Library source |
+| `TurboTables/` | Demo app (Node.js, Express 5, Handlebars) and tests |
+| `CHANGELOG.md` | Release history, including breaking changes |
 
-### Usage
-1. CSS changes
-  * Add CCS links for FontAwesome and TurboTables
-```css
-<link rel="stylesheet" type="text/css" href="https://opensource.keycdn.com/fontawesome/4.7.0/font-awesome.min.css ">
-<link rel="stylesheet" type="text/css" href="/stylesheets/turbotables.css" />
+## Installing in an ASP.NET Core app (LibMan)
+
+Releases are git tags (`v1.0.0`, ...). jsDelivr serves the files in `dist/` for any tag, so LibMan can install a pinned version. Add this to the app's `libman.json`:
+
+```json
+{
+  "provider": "jsdelivr",
+  "library": "gh/wbwiltshire/TurboTables@v1.0.0",
+  "destination": "wwwroot/lib/turbotables/",
+  "files": [ "dist/turbotables.min.js", "dist/turbotables.min.js.map", "dist/turbotables.min.css" ]
+}
 ```
-1. HTML5 <b>table</b> changes
-  * Add <b>id</b> attribute to <b>table</b> tag
-  * Add <b>ctTotalItems</b> attribute to the <b>table</b> tag
-  * Add <b>colHeaders</b> class to <b>tr</b> tag in the table
-  * Add <b>sortable</b> to the table header columns <b>class</b> on which you want to sort
-  * Add <b>filterable</b> to the table header columns <b>class</b> on which you want to filter
-  * Additionally, the column header must have an <b>id</b> attribute to be sortable/filterable
+
+Run `libman restore` (Visual Studio does this on build). To upgrade, change the version and restore again.
+
+Reference the files from your layout or view. TurboTables needs Bootstrap 5 CSS and Font Awesome 7 (for the filter and sort icons). It doesn't need jQuery.
+
+```html
+<link rel="stylesheet" href="~/lib/turbotables/dist/turbotables.min.css" asp-append-version="true" />
+<script src="~/lib/turbotables/dist/turbotables.min.js" asp-append-version="true"></script>
+```
+
+## Usage
+
+### 1. Markup
+
 ```html
 <div class="row">
     <div class="col-md-12">
-        <table id="CustomerTable" ctTotalItems="100" class=”table table-striped tabled-bordered table-condensed table-hover”>
+        <table id="CustomerTable" ctTotalItems="100" class="table table-striped table-bordered table-sm table-hover">
             <thead>
                 <tr class="colHeaders">
-                    <th id="Id" class="sortable filterable"> <a href="#">Id</a></th>
-                    <th id="FirstName" class="sortable filterable"><a href="#">First Name</a></th>
-                    <th id="LastName" class="sortable filterable"> <a href="#">Last Name</a></th>
-                    <th id="Email" class="sortable filterable"><a href="#">E-Mail</a></th>
+                    <th data-column="Id" class="sortable filterable"><a href="#">Id</a></th>
+                    <th data-column="FirstName" class="sortable filterable"><a href="#">First Name</a></th>
+                    <th data-column="LastName" class="sortable filterable"><a href="#">Last Name</a></th>
+                    <th data-column="EMail" class="sortable filterable"><a href="#">E-Mail</a></th>
                 </tr>
             </thead>
-            <tbody id="CustomerList">
-            </tbody>
-	    </table>
+            <tbody id="CustomerList"></tbody>
+        </table>
     </div>
 </div>
 ```
-1. Javascript changes
-  * Instantiation
+
+* Give the `table` an `id` and a total-items attribute (`ctTotalItems` by default) holding the total row count.
+* Put the `colHeaders` class (configurable) on the header `tr`. If no row has it, the first `thead` row is used.
+* Mark the header cells you want to sort or filter on with `sortable` / `filterable`.
+* Name each column with `data-column` (the server-side property name). An `id` still works, but ids must be unique on the page.
+* The controls are inserted before and after the nearest `.row` that contains the table (or the `container` option).
+
+### 2. Script
+
 ```js
-var customerTable = new TurboTablesLib({
+const customerTable = new TurboTablesLib({
     tableId: 'CustomerTable',
     totalItemsAttribute: 'ctTotalItems',
     page: 1,
-    pageSize: 10,   
-    pagerSizeOptions: [[10, 25, 50, -1],[10, 25, 50, 'All']],    
+    pageSize: 10,
+    pagerSizeOptions: [[10, 25, 50, -1], [10, 25, 50, 'All']],
     sortColumn: 'Id',
     sortDirection: 'asc',
-    showFilter: true,
-    columnHeaderClass: 'colHeaders',
-    spinnerSource: '/images/spinner-128.gif'
-}); 
-```
-  * Data Binding
-```js
-customerTable.setDataBinding(CustomerList);
-```
-  * Update refresh logic
-```js
-     $('#refresh').click(function () {
-          CustomerList(customerTable.getPage(), customerTable.getPageSize(), customerTable.getSortColumn(), customerTable.getSortDirection(), customerTable.getFilterColumn(), customerTable.getFilterValue());
-     });
-```
-  * Update REST service call
-```js
-     function CustomerList(page, pageSize, sortColumn, direction) {
-        var requestString = '?page=' + page + '&pageSize=' + pageSize + '&sortColumn=' + sortColumn + '&direction=' + direction + '&filterColumn=' + filterColumn + '&filterValue=' + filterValue;
-        var url = baseUrl + 'customer/' + requestString;		
-...
-...
-                if (parseInt(result.totalItems, 10) > 0)
-                    bindGrid(gridBodyId, template, result.customers);
-                else
-                    bindNoRecords(gridBodyId);
-                customerTable.endDataBinding(result.totalItems);
-            },
-            error: function (result, status, xhr) {
-                bindNoRecords(gridBodyId);
-            }
-	    });
+    showFilter: true
+});
+
+customerTable.setDataBinding(loadCustomers);
+
+// TurboTables calls this whenever the page, page size, sort or filter changes.
+async function loadCustomers(page, pageSize, sortColumn, direction, filterColumn, filterValue, requestId) {
+    try {
+        const response = await fetch('/api/customer/?' + customerTable.buildQueryString());
+        const result = await response.json();
+        if (!customerTable.isCurrentRequest(requestId)) return;     // a newer request has started
+        bindGrid(result.customers);                                  // e.g. with a Handlebars template
+        customerTable.endDataBinding(result.totalItems, requestId);
+    } catch (err) {
+        customerTable.endDataBinding(0, requestId);                  // always end, or the spinner keeps spinning
     }
-	
-	function bindGrid(grid, src, data) {
-        var result = '{"' + grid + '":' + JSON.stringify(data) + "}";
-        var source = $('#' + src).html();
-        var template = Handlebars.compile(source);
-        var html = template(JSON.parse(result));
-        $("#" + grid).html(html);
-    }
-	
-    function bindNoRecords(gridBodyId) {
-         var html = '<tr id="noRecordsFound"><td class="lead text-left text-danger" colspan= "4">No Records Found!</td></tr>';
-         $("#" + gridBodyId).html(html);
-    }			
-```
-1. Add TurboTables.js to page scripts
-```js
-<script src="/javascripts/turbotables.js" type="text/javascript"></script>
+}
+
+document.getElementById('refresh').addEventListener('click', () => customerTable.refresh());
 ```
 
-### Themes / Styling
-This sample uses Bootstrap 4 and Bootswatch themes
+`buildQueryString(extraParams)` returns `page`, `pageSize`, `sortColumn`, `direction` and (when a filter is active) `filterColumn` and `filterValue`, all URL-encoded. Pass an object to add your own parameters, e.g. `buildQueryString({ id: 7 })`.
 
-* Using Cosmo for light and Slate for dark
-* Using FontAwesome for icons
-* [Bootswatch](https://bootswatch.com/)
-* [BootstrapCDN](https://www.bootstrapcdn.com/bootswatch)
-* [FontAwesome](https://fontawesome.com/icons)
+If you render rows with Handlebars, use `{{value}}` (HTML-escaped). Never use `{{{value}}}` for data from the server.
 
-### Testing in Visual Studio Code (VSC)
-* Run NPM Check Updates from the project directory to review/update your libraries are up to date.
+### Options
+
+| Option | Default | Notes |
+|---|---|---|
+| `tableId` | *(required)* | |
+| `totalItemsAttribute` | `'ctTotalItems'` | Table attribute holding the initial total |
+| `page` | `1` | |
+| `pageSize` | `10` | `-1` means "All". Added to the page-size list if it isn't already there |
+| `pagerSizeOptions` | `[[10,25,50,-1],[10,25,50,'All']]` | `[values, labels]` |
+| `sortColumn` / `sortDirection` | `'Id'` / `'asc'` | Direction is case-insensitive and is always sent lowercase |
+| `showFilter` | `false` | Shows the filter icon and filter row |
+| `columnHeaderClass` | `'colHeaders'` | |
+| `spinnerSource` | none | Image URL. Without it a Bootstrap `spinner-border` is shown |
+| `tableInfoTemplate` | `'Showing {0} to {1} of {2} entries'` | |
+| `container` | nearest `.row` | Element (or id) the controls are placed around |
+| `classes` | Bootstrap 5 classes | Override any generated element's classes, e.g. `{ pagerButton: 'btn btn-dark' }` |
+| `icons` | Font Awesome 7 | `{ filter, sortAsc, sortDesc }` |
+
+### Methods
+
+| Method | |
+|---|---|
+| `setDataBinding(fn)` | Sets the data-loading function (see signature above) |
+| `endDataBinding(totalItems[, requestId])` | Call after binding, **including on errors**. Returns `false` and does nothing for a superseded `requestId` |
+| `isCurrentRequest(requestId)` | |
+| `refresh()` | Re-requests the current page |
+| `buildQueryString([extraParams])` | |
+| `goToPage(n)` | |
+| `getPage()`, `getPageSize()`, `getLastPage()`, `getSortColumn()`, `getSortDirection()`, `getFilterColumn()`, `getFilterValue()` | Filter getters return the *applied* filter |
+| `showSpinner(show)` | |
+
+Generated elements get ids prefixed with the table id (`CustomerTable-next`, `CustomerTable-search`, ...), so several tables can share a page.
+
+### Server-side responsibilities
+
+TurboTables only sends what the user picked, so the server must:
+
+* **Allowlist** `sortColumn`, `direction` and `filterColumn` against known property names. Never concatenate them into SQL or Dynamic LINQ.
+* **Cap** `pageSize`. "All" sends the current total, which a caller can replace with any number.
+* Return the total row count for the current filter, so `endDataBinding(totalItems)` can update the pager.
+
+## The demo app
+
+Requires Node.js 20 or later.
+
 ```
-  cd TurboTables
-  ncu --interactive
+cd TurboTables
+npm install
+npm run dev          # http://localhost:5000, restarts on file changes
+npm test             # Vitest + jsdom (run from PowerShell; Vitest fails to start in Git Bash)
+npm run build        # rebuild dist/
 ```
-* Webpack is used to keep the Client-side javascript libraries update to date
-* Select Run->Start Debugging from the VSC menu 
 
-### Deploy to Nginx
-* Create a tar file which contains the following:
-  - all the files in the node_modules folder
-  - all files in the public folder
-  - all files in the routes folder
-  - all files in the views folder
-  - the app.js, repository.js, and customer.json files
- * copy the tar file over to the Linux server
- * create a directory in the web folder and set owership (www-data), group, and permissions
- ```
-sudo mkdir /web/TurboTables
-sudo chown www-data /web/TurboTables
-sudo chgrp www-data /web/TurboTables
-sudo chmod 775 /web/TurboTables
-cd /web/MeanGreen
- ```
- * extract the files into the web folder and set owership (www-data), group, and permissions
-```
-sudo tar -xvf /home/wbw/turbotables.tar
-```
- * create a services file (turbotables.service) in the /etc/systemd/system folder
- ```
- [Unit]
-Description=Turbo Tables App
-After=network.target
+In VS Code use **Run > Start Debugging** (F5), which uses `.vscode/launch.json` (sets `NODE_ENV=development` and a 500 ms simulated delay so the spinner is visible). Stop it with **Shift+F5**.
 
-[Service]
-ExecStart=/usr/bin/node /web/TurboTables/app.js
-WorkingDirectory=/web/TurboTables
-Restart=always
-RestartSec=10
-User=www-data
-Environment=NODE_ENV=production
-StandardOutput=syslog
-StandardError=syslog
-SyslogIdentifier=turbotables-app
+Environment variables:
 
-[Install]
-WantedBy=multi-user.target
- ```
- * Reload System.d and start the service
- ```
-sudo systemctl daemon-reload
-sudo systemctl restart turbotables.service
- ```
- * If there are any problems, you can review the service's journal
- ```
- sudo journalctl -u turbotables.service -f
- ```
+| Variable | Default | |
+|---|---|---|
+| `PORT` | `5000` | |
+| `NODE_ENV` | *(unset)* | Only `development` shows stack traces and uses the short `dev` log format |
+| `TRUST_PROXY` | *(unset)* | Set when behind a reverse proxy, e.g. `1` for one hop (Nginx Proxy Manager), so logs show real client IPs |
+| `DEMO_DELAY_MS` | `0` | Simulated API latency |
 
-### FAQ
-1. Why aren't my columns sorting?
-  * The column header must have a header tag ```<a href="#" >columnHeader</a>```
-  * The table columns must be marked as sortable
-  * The sorting logic must be implemented on the server side
-  * The table column must match the property name on the server side
-2. Why doesn't the <b>Showing x to y of z entries</b> displayed?
-  * Make sure the <b>table</b> is wrapped in Bootstrap row and column <b>div</b> tags
+## Releasing a new version
+
+1. Update the version in `TurboTables/package.json`, in the banner and `VERSION` constant at the top of `turbotables.js`, and in the banner of `turbotables.css`. The build fails if they disagree.
+2. `npm run build` then `npm test`. A test fails if `dist/` is out of date.
+3. Add an entry to `CHANGELOG.md`, commit, and tag: `git tag v1.1.0 && git push origin v1.1.0`.
+4. In each app, bump the version in `libman.json` and run `libman restore`.
+
+Never move or re-push an existing tag. jsDelivr caches tagged files permanently.
+
+## Deploying the demo to DebServer1
+
+The demo runs as a systemd service behind Nginx Proxy Manager (NPM).
+
+1. Build a release folder on your workstation (run from PowerShell; Windows 10 and later include `tar`):
+   ```
+   cd TurboTables
+   tar -czf turbotables-demo.tgz app.js validation.js repository.js customer.json package.json package-lock.json public routes views
+   ```
+   Copy it to the server, e.g. `scp turbotables-demo.tgz debserver1:~`.
+2. On the server, install it and install only the runtime packages:
+   ```
+   sudo mkdir -p /web/TurboTables
+   sudo tar -xzf ~/turbotables-demo.tgz -C /web/TurboTables
+   cd /web/TurboTables
+   sudo npm ci --omit=dev
+   sudo chown -R root:www-data /web/TurboTables
+   sudo chmod -R u=rwX,g=rX,o= /web/TurboTables
+   ```
+   The service user (`www-data`) only needs read access.
+3. Create `/etc/systemd/system/turbotables.service`:
+   ```
+   [Unit]
+   Description=TurboTables demo
+   After=network.target
+
+   [Service]
+   ExecStart=/usr/bin/node /web/TurboTables/app.js
+   WorkingDirectory=/web/TurboTables
+   Restart=always
+   RestartSec=10
+   User=www-data
+   Group=www-data
+   Environment=NODE_ENV=production
+   Environment=PORT=5000
+   Environment=TRUST_PROXY=1
+   SyslogIdentifier=turbotables
+   NoNewPrivileges=true
+   ProtectSystem=strict
+   ProtectHome=true
+   PrivateTmp=true
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+4. Start it and check it:
+   ```
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now turbotables.service
+   curl -I http://localhost:5000/
+   sudo journalctl -u turbotables.service -f
+   ```
+5. In NPM, point the proxy host at `http://<DebServer1>:5000` and enable SSL. If NPM runs on DebServer1 itself, consider binding the port to localhost only (firewall it), so the app is reachable only through NPM.
+
+For later updates, repeat steps 1–2 and run `sudo systemctl restart turbotables.service`.
+
+## FAQ
+
+1. **Why aren't my columns sorting?**
+   * The header needs the `sortable` class and a `data-column` (or `id`).
+   * The server must implement sorting on that property name.
+2. **Why isn't "Showing x to y of z entries" displayed, or the controls are in the wrong place?**
+   * Wrap the table in a Bootstrap `.row` / column `div`, or pass the `container` option.
+3. **The spinner never stops.**
+   * Call `endDataBinding()` in your error handler too.
+
+## More information
+* [Bootstrap](https://getbootstrap.com/) · [Bootswatch](https://bootswatch.com/) · [Font Awesome](https://fontawesome.com/icons) · [Handlebars](https://handlebarsjs.com/) · [Express](https://expressjs.com/)
+* [LibMan](https://learn.microsoft.com/aspnet/core/client-side/libman/) · [jsDelivr GitHub CDN](https://www.jsdelivr.com/?docs=gh)

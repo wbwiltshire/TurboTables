@@ -1,125 +1,105 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var http = require('http');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var hbs = require('hbs');
-var fs = require('fs');
-var repo = require('./repository');
+'use strict';
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const logger = require('morgan');
+const hbs = require('hbs');
+const repo = require('./repository');
+const pkg = require('./package.json');
 
-//Load the data
-var configurationFile = 'customer.json';
-var customers = JSON.parse(
-     fs.readFileSync(configurationFile, 'utf8')
-);
-repo.loadCustomers(customers);
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-var app = express();
+// Load the demo data
+repo.loadCustomers(JSON.parse(fs.readFileSync(path.join(__dirname, 'customer.json'), 'utf8')));
 
-// Setup view engine and helpers (Handlebars)
+const app = express();
+app.disable('x-powered-by');
+
+// Behind Nginx Proxy Manager: set TRUST_PROXY (e.g. "1" or the proxy's IP) so
+// req.ip and the access log show the real client address.
+if (process.env.TRUST_PROXY) {
+     const hops = parseInt(process.env.TRUST_PROXY, 10);
+     app.set('trust proxy', Number.isInteger(hops) ? hops : process.env.TRUST_PROXY);
+}
+
+// View engine and helpers (Handlebars)
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
-var blocks = {};
-hbs.registerHelper('block', function (name) {
-     var val = (blocks[name] || []).join('\n');
+app.locals.version = pkg.version;
+app.locals.year = new Date().getFullYear();
 
-     // clear the block
-     blocks[name] = [];
-     return val;
-});
+// Per-request content blocks ({{#contentFor 'pageScripts'}} ... {{{block 'pageScripts'}}}).
+// Stored on the render data root, not a module global, so concurrent requests can't mix.
 hbs.registerHelper('contentFor', function (name, options) {
-     var block = blocks[name];
-     if (!block) {
-          block = blocks[name] = [];
-     }
-     block.push(options.fn(this));
+     const root = options.data.root;
+     root._blocks = root._blocks || {};
+     (root._blocks[name] = root._blocks[name] || []).push(options.fn(this));
+});
+hbs.registerHelper('block', function (name, options) {
+     const blocks = options.data.root._blocks || {};
+     return (blocks[name] || []).join('\n');
 });
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
+// Security headers. Handlebars.compile() in the browser needs 'unsafe-eval'; inline
+// scripts and other script origins are still blocked.
+const CDN = 'https://cdn.jsdelivr.net';
+const CSP = [
+     "default-src 'self'",
+     "script-src 'self' " + CDN + " 'unsafe-eval'",
+     "style-src 'self' " + CDN + ' https://fonts.googleapis.com', // Bootswatch Cosmo @imports Google Fonts
+     "font-src 'self' " + CDN + ' https://fonts.gstatic.com',
+     "img-src 'self' data:",
+     "connect-src 'self'",
+     "form-action 'self'",
+     "frame-ancestors 'none'",
+     "base-uri 'self'",
+     "object-src 'none'"
+].join('; ');
+app.use(function (req, res, next) {
+     res.set({
+          'Content-Security-Policy': CSP,
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'DENY',
+          'Referrer-Policy': 'strict-origin-when-cross-origin'
+     });
+     next();
+});
+
+app.use(logger(isDevelopment ? 'dev' : 'combined', { skip: function () { return process.env.NODE_ENV === 'test'; } }));
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-//Setup route scripts and routes
-var routes = require('./routes/index');
-var customerapi = require('./routes/api/customer');
-var customer = require('./routes/customer');
-var pager = require('./routes/pager');
+// Routes
+app.use('/', require('./routes/index'));
+app.use('/customer', require('./routes/customer'));
+app.use('/pager', require('./routes/pager'));
+app.use('/api/customer', require('./routes/api/customer'));
 
-app.use('/', routes);
-app.use('/customer', customer);
-app.use('/pager', pager);
-app.use('/api/customer', customerapi);
-
-
-// catch 404 and forward to error handler
+// 404
 app.use(function (req, res, next) {
-     var err = new Error('Not Found');
+     const err = new Error('Not Found');
      err.status = 404;
      next(err);
 });
 
-// error handlers
-
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
-     app.use(function (err, req, res, next) {
-          res.status(err.status || 500);
-          res.render('error', {
-               message: err.message,
-               error: err
-          });
-     });
-}
-
-// production error handler
-// no stacktraces leaked to user
+// Error handler: stack traces only when NODE_ENV=development is set explicitly.
 app.use(function (err, req, res, next) {
-     res.status(err.status || 500);
-     res.render('error', {
-          message: err.message,
-          error: {}
+     const status = err.status || err.statusCode || 500;
+     if (status >= 500) console.error(err);
+     res.status(status);
+     const message = status >= 500 && !isDevelopment ? 'Internal Server Error' : err.message;
+     if (req.originalUrl.startsWith('/api/'))
+          return res.json({ error: message });
+     res.render('error', { title: 'Error', message: message, status: status, stack: isDevelopment ? err.stack : '' });
+});
+
+// Start the server unless loaded by a test.
+if (require.main === module) {
+     const port = parseInt(process.env.PORT || '5000', 10);
+     app.listen(port, function () {
+          console.log('TurboTables demo listening on port ' + port + (isDevelopment ? ' (development)' : ''));
      });
-});
-
-//Start server
-
-/**
- * Get port from environment and store in Express.
- */
-
-var port = normalizePort(process.env.PORT || '5000');
-app.set('port', port);
-
-//app.set('port', process.env.PORT);
-http.createServer(app).listen(app.get('port'), function () {
-});
-
-console.log('Express server listening on port: ' + app.get('port'));
-
-/**
- * Normalize a port into a number, string, or false.
- */
-
-function normalizePort(val) {
-     var port = parseInt(val, 10);
-
-     if (isNaN(port)) {
-          // named pipe
-          return val;
-     }
-
-     if (port >= 0) {
-          // port number
-          return port;
-     }
-
-     return false;
 }
+
 module.exports = app;

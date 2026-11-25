@@ -1,48 +1,26 @@
-$(document).ready(function () {
-    var baseUrl = '/api/';
-    var totalItems = 0;
-    var page = 1;
-    var pageSize = 21;
-    var orderBy = 'Id';
-    var direction = 'asc';
+// Plain (unpaged) customer list with a refresh button.
+document.addEventListener('DOMContentLoaded', function () {
+     'use strict';
+     const PAGE_SIZE = 21;
+     const tbody = document.getElementById('CustomerList');
+     const spinner = document.getElementById('spinner');
 
-    $('#refresh').click(function () {
-        CustomerList();
-    });
-
-    function CustomerList() {
-        var requestString = '?page=' + page + '&pageSize=' + pageSize;
-        var url = baseUrl + 'customer/' + requestString;
-        var grid = 'CustomerList';
-        var template = 'customerListHGrid';
-        //Show the spinner
-        $('#spinner').show();
-        ajaxGet({
-            url: url,
-            success: function (result) {
-                 jsonresult = result;
-                 //Hide the spinner gif
-                 $('#spinner').hide();
-                 bindGrid(grid, template, result.customers);
-            },
-            error: function (result, status, xhr) {
-                 $('#spinner').hide();
-            }
-        });
-    }
-
-    function bindGrid(grid, src, data) {
-        var result = '{"' + grid + '":' + JSON.stringify(data) + "}";
-        var source = $('#' + src).html();
-        var template = Handlebars.compile(source);
-        var html = template(JSON.parse(result));
-        $("#" + grid).html(html);
-        if (data.length < 1) {
-            $("#noRecordsFound").removeAttr('Style', 'display');
-        }
-        else {
-            $("#noRecordsFound").css('display', 'none');
-        }
-    }
-
+     document.getElementById('refresh').addEventListener('click', async function (evt) {
+          evt.preventDefault();
+          spinner.hidden = false;
+          try {
+               const result = await Demo.getJson('/api/customer/?page=1&pageSize=' + PAGE_SIZE);
+               if (result.customers.length)
+                    tbody.innerHTML = Demo.renderTemplate('customerListHGrid', { CustomerList: result.customers });
+               else
+                    Demo.showNoRecords(tbody, 4);
+          }
+          catch (err) {
+               console.error(err);
+               Demo.showNoRecords(tbody, 4);
+          }
+          finally {
+               spinner.hidden = true;
+          }
+     });
 });

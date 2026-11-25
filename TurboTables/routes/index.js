@@ -1,13 +1,14 @@
-var express = require('express');
-var router = express.Router();
+'use strict';
+const express = require('express');
 
-/* GET home page. */
-router.get('/', function (req, res, next) {
-    res.render('index', { title: 'Home', welcome: 'Express' });
+const router = express.Router();
+
+router.get('/', function (req, res) {
+     res.render('index', { title: 'Home', welcome: 'Express' });
 });
-/* GET about page. */
-router.get('/about', function (req, res, next) {
-    res.render('about', { title: 'About', version: '0.9.3' });
+
+router.get('/about', function (req, res) {
+     res.render('about', { title: 'About' });
 });
 
 module.exports = router;

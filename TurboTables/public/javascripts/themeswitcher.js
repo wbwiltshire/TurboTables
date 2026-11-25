@@ -1,67 +1,36 @@
-﻿$(document).ready(function () {
-     var lightThemeStyle = { href: 'https://stackpath.bootstrapcdn.com/bootswatch/4.4.1/cosmo/bootstrap.min.css', integrity: 'sha256-KgiMiZgZazlcRqcTnpKlQRyoi1Y79W1dsn5CtKFtwH0=' };
-     var darkThemeStyle = { href: 'https://stackpath.bootstrapcdn.com/bootswatch/4.4.1/slate/bootstrap.min.css', integrity: 'sha256-6NKhLkfyx8JV2uViSv6uakftk/GM5vfDWtY7ALlbG44=' };
+﻿// Bootswatch light/dark theme switcher. Loaded in <head> so the saved theme is applied
+// before first paint. Each theme keeps its own SRI hash.
+(function () {
+     'use strict';
+     var THEMES = {
+          Light: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.8/dist/cosmo/bootstrap.min.css', integrity: 'sha384-QOrayDhdkHbTAsh/gb0iGlDY/xHwI3sdDvyHkxnfpY20Y+Pa8aRHFXmLQYklmIx/', bsTheme: 'light' },
+          Dark: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.8/dist/slate/bootstrap.min.css', integrity: 'sha384-qhrBcipvKS9sQcI3lcoXpdKNs9jmQAunazzwZW3aZeuFMoRih2NYJIDsr6XTFndn', bsTheme: 'dark' }
+     };
+     var KEY = 'turbotables-theme';
 
-     checkCookie(lightThemeStyle, darkThemeStyle);
+     function saved() {
+          try { return localStorage.getItem(KEY) === 'Light' ? 'Light' : 'Dark'; } catch (e) { return 'Dark'; }
+     }
 
-     $('#theme-toggle').click(function () {
-          var styleElement = document.getElementById('theme-style');
-          var themeElement = document.getElementById('theme-toggle');
+     function apply(name) {
+          var theme = THEMES[name];
+          var link = document.getElementById('theme-style');
+          if (link && link.getAttribute('href') !== theme.href) {
+               // integrity must change before href so the new file is checked against its own hash
+               link.setAttribute('integrity', theme.integrity);
+               link.setAttribute('href', theme.href);
+          }
+          document.documentElement.setAttribute('data-bs-theme', theme.bsTheme);
+          var toggle = document.getElementById('theme-toggle');
+          if (toggle) toggle.textContent = name === 'Light' ? 'Dark' : 'Light';
+          try { localStorage.setItem(KEY, name); } catch (e) { /* storage disabled */ }
+     }
 
-          if (themeElement.innerHTML.trim() === 'Light') 
-               setTheme(themeElement, styleElement, lightThemeStyle, 'Dark', 'Light');
-          else 
-               setTheme(themeElement, styleElement, darkThemeStyle, 'Light', 'Dark');
+     apply(saved());
+     document.addEventListener('DOMContentLoaded', function () {
+          apply(saved());
+          document.getElementById('theme-toggle').addEventListener('click', function () {
+               apply(saved() === 'Light' ? 'Dark' : 'Light');
+          });
      });
-
-});
-
-function setTheme(themeElement, styleElement, styleInfo, nextStyle, currentStyle) {
-     styleElement.setAttribute('href', styleInfo.href);
-     //styleElement.setAttribute('integrity', styleInfo.integrity);
-     themeElement.innerHTML = nextStyle;
-     setCookie('currentTheme', currentStyle, 7);
-}
-
-function setCookie(cname, cvalue, exdays) {
-     var d = new Date();
-     d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-     var expires = "expires=" + d.toUTCString();
-     document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-}
-
-function getCookie(cname) {
-     var name = cname + "=";
-     var ca = document.cookie.split(';');
-     for (var i = 0; i < ca.length; i++) {
-          var c = ca[i];
-          while (c.charAt(0) === ' ') {
-               c = c.substring(1);
-          }
-          if (c.indexOf(name) === 0) {
-               return c.substring(name.length, c.length);
-          }
-     }
-     return '';
-}
-
-function checkCookie(lightThemeStyle, darkThemeStyle) {
-     var themeElement = document.getElementById('theme-toggle');
-     var styleElement = document.getElementById('theme-style');
-     var currentTheme = getCookie("currentTheme");
-
-     switch (currentTheme) {
-          case 'Light':
-               if (themeElement.innerHTML.trim() === 'Light')
-                    setTheme(themeElement, styleElement, lightThemeStyle, 'Dark', 'Light');
-               break;
-          case 'Dark':
-               if (themeElement.innerHTML.trim() === 'Dark')
-                    setTheme(themeElement, styleElement, darkThemeStyle, 'Light', 'Dark');
-               break;
-          default:
-               setTheme(themeElement, styleElement, darkThemeStyle, 'Light', 'Dark');
-               break;
-
-     }
-}
+}());

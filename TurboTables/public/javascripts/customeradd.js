@@ -1,31 +1,22 @@
-$(document).ready(function () {
-    var baseUrl = '/api/';
+document.addEventListener('DOMContentLoaded', function () {
+     'use strict';
+     const form = document.getElementById('createForm');
+     const errors = document.getElementById('formErrors');
 
-    $('#createForm').submit(function (e) {
-        //prevent Default functionality
-        e.preventDefault();
-
-        submitForm(this, baseUrl + 'customer')
-    });
-
-    function submitForm(form, url) {
-        var formData = $(form).serialize();
-        ajaxPost({
-            url: url,
-            data: formData,
-            dataType: 'html',
-            success: function (result, status, xhr) {
-                //Clear form errors and forward
-                forwardTo('/customer/');
-            },
-            error: function (result, status, xhr) {
-                //Process UnprocessibleEntity
-            }
-        });
-    };
-
-    //forward to url from context menu
-    function forwardTo(url) {
-        window.location = url;
-    };
+     form.addEventListener('submit', async function (evt) {
+          evt.preventDefault();
+          errors.hidden = true;
+          const result = await Demo.postForm('/api/customer', form);
+          if (result.ok) {
+               window.location.href = '/customer/' + encodeURIComponent(result.body.Id);
+               return;
+          }
+          errors.replaceChildren();
+          (result.body.errors || ['Save failed (' + result.status + ').']).forEach(function (message) {
+               const li = document.createElement('li');
+               li.textContent = message;
+               errors.appendChild(li);
+          });
+          errors.hidden = false;
+     });
 });

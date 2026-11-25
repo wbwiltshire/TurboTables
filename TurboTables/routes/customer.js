@@ -1,71 +1,32 @@
-//Routing for customer web page
-var express = require('express');
-var router = express.Router();
-const axios = require('axios');
+'use strict';
+// Routing for customer web pages.
+// Data comes straight from the repository: the old version made an HTTP call
+// back to 'http://' + req.headers.host, which let a forged Host header point the
+// server at any address (SSRF).
+const express = require('express');
+const repo = require('../repository');
 
-var customerRoute = '/api/customer/';
-var page = 1;
-var pageSize = 21;
-var orderBy = 'Id';
-var direction = 'asc';
+const router = express.Router();
+const PAGE_SIZE = 21;
 
-/* GET for add page. */
 router.get('/add', function (req, res) {
-    res.render('customeradd', { title: 'Add Customer', message: 'Hello', customer: { Id: 0, FirstName: '', LastName: '', EMail: '' } });
+     res.render('customeradd', { title: 'Add Customer', customer: { Id: 0, FirstName: '', LastName: '', EMail: '' } });
 });
 
-/* GET home page. */
-router.get('/', async function (req, res, next) {
-    var response = null;
-    var json = null;
-    var options = setGetOptions('http://' + req.headers.host + customerRoute + '?page=' + page + '&pageSize=' + pageSize,
-        { }
-    );
-
-    try {
-        response = await axios.get(options.url);
-        json = response.data;
-        if (response.status === 200) {
-            res.render('customer', { title: 'Customer List', message: 'Hello', customers: json });
-        }
-        else
-            console.log('Error: ' + response.statusCode + ' - ' + error);
-    }
-    catch (error) {
-        console.log('Error: ', error);
-        next(error);     
-    }
+router.get('/', function (req, res) {
+     const customers = repo.findCustomersPaged({ page: 1, pageSize: PAGE_SIZE });
+     res.render('customer', { title: 'Customer List', customers: customers });
 });
 
-/* GET by id page. */
-router.get('/:id', async function (req, res, next) {
-    var response = null;
-    var json = null;
-    var options = setGetOptions('http://' + req.headers.host + customerRoute + req.params.id,
-        {}
-    );
-
-    try {
-        response = await axios.get(options.url);
-        json = response.data;
-        if (response.status === 200) {
-            res.render('customerdetail', { title: 'Customer Details', message: 'Hello', customer: json });
-        }
-        else
-            console.log('Error: ' + response.statusCode + ' - ' + error);
-    }
-    catch (error) {
-        console.log('Error: ', error);
-        next(error);     
-    }
+router.get('/:id', function (req, res, next) {
+     const id = parseInt(req.params.id, 10);
+     const customer = Number.isInteger(id) ? repo.findCustomerById(id) : null;
+     if (!customer) {
+          const err = new Error('Customer not found');
+          err.status = 404;
+          return next(err);
+     }
+     res.render('customerdetail', { title: 'Customer Details', customer: customer });
 });
 
-function setGetOptions(u, q) {
-    var options = {
-        url: u,
-        method: 'GET',
-        qs: q
-    };
-    return options;
-};
 module.exports = router;
