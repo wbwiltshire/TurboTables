@@ -9,7 +9,7 @@ What it adds around your table:
 * **Pager (below):** First / Previous / Next / Last on the left, Jump to page in the middle, Page size on the right.
 * **Loading:** the table is dimmed with a spinner over it while data loads.
 
-Colours come from Bootstrap 5.3's CSS variables, so the controls follow light/dark mode and Bootswatch themes.
+Colours come from Bootstrap 5.3's CSS variables, so the controls follow light/dark mode and Bootstrap themes such as Bootswatch.
 
 ![TurboTables on the demo's Customers page: Filter button, Showing count and Search above the table, sortable headers, and First/Previous/Next/Last, Jump and Page size below](docs/images/customers.png)
 
@@ -237,5 +237,5 @@ For later updates, repeat steps 1–2 and run `sudo systemctl restart turbotable
    * Call `endDataBinding()` in your error handler too.
 
 ## More information
-* [Bootstrap](https://getbootstrap.com/) · [Bootswatch](https://bootswatch.com/) · [Font Awesome](https://fontawesome.com/icons) · [Handlebars](https://handlebarsjs.com/) · [Express](https://expressjs.com/)
+* [Bootstrap](https://getbootstrap.com/) · [Font Awesome](https://fontawesome.com/icons) · [Handlebars](https://handlebarsjs.com/) · [Express](https://expressjs.com/)
 * [LibMan](https://learn.microsoft.com/aspnet/core/client-side/libman/) · [jsDelivr GitHub CDN](https://www.jsdelivr.com/?docs=gh)
