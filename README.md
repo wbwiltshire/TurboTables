@@ -18,6 +18,7 @@ This repository contains:
 | `dist/` | The released library files: `turbotables.js`, `turbotables.min.js` (+ source map), `turbotables.css`, `turbotables.min.css` |
 | `TurboTables/public/javascripts/turbotables.js` | Library source |
 | `TurboTables/` | Demo app (Node.js, Express 5, Handlebars) and tests |
+| `Linux/` | systemd unit for the demo server (`turbotables.service`) |
 | `CHANGELOG.md` | Release history, including breaking changes |
 
 ## Installing in an ASP.NET Core app (LibMan)
@@ -167,8 +168,9 @@ Environment variables:
 | Variable | Default | |
 |---|---|---|
 | `PORT` | `5000` | |
+| `HOST` | *(all interfaces)* | Address to listen on, e.g. `172.17.0.1` so only Docker containers (Nginx Proxy Manager) can reach it |
 | `NODE_ENV` | *(unset)* | Only `development` shows stack traces and uses the short `dev` log format |
-| `TRUST_PROXY` | *(unset)* | Set when behind a reverse proxy, e.g. `1` for one hop (Nginx Proxy Manager), so logs show real client IPs |
+| `TRUST_PROXY` | *(unset)* | Set behind a reverse proxy so logs show real client IPs: a subnet such as `172.17.0.0/16`, `loopback`, or a hop count such as `1` |
 | `DEMO_DELAY_MS` | `0` | Simulated API latency |
 
 ## Releasing a new version
@@ -182,16 +184,18 @@ Never move or re-push an existing tag. jsDelivr caches tagged files permanently.
 
 ## Deploying the demo to DebServer1
 
-The demo runs as a systemd service behind Nginx Proxy Manager (NPM).
+The demo runs as a systemd service on DebServer1. Nginx Proxy Manager (NPM), running in Docker on the same host, forwards to it on the Docker bridge at `172.17.0.1:8006`, so the app isn't reachable from the network directly. The unit file is [`Linux/turbotables.service`](Linux/turbotables.service). Requires Node.js 20 or later on the server.
 
-1. Build a release folder on your workstation (run from PowerShell; Windows 10 and later include `tar`):
+1. Build the release tarball on your workstation (PowerShell; Windows 10 and later include `tar`):
    ```
    cd TurboTables
-   tar -czf turbotables-demo.tgz app.js validation.js repository.js customer.json package.json package-lock.json public routes views
+   tar -czf turbotables-demo.tgz app.js config.js validation.js repository.js customer.json package.json package-lock.json public routes views
+   scp turbotables-demo.tgz ../Linux/turbotables.service debserver1:~
    ```
-   Copy it to the server, e.g. `scp turbotables-demo.tgz debserver1:~`.
-2. On the server, install it and install only the runtime packages:
+2. On the server, install into an empty folder (move any previous install aside first) and install only the runtime packages:
    ```
+   sudo systemctl stop turbotables.service      # if it is already installed
+   sudo mv /web/TurboTables /web/TurboTables.old  # if a previous version exists
    sudo mkdir -p /web/TurboTables
    sudo tar -xzf ~/turbotables-demo.tgz -C /web/TurboTables
    cd /web/TurboTables
@@ -200,41 +204,19 @@ The demo runs as a systemd service behind Nginx Proxy Manager (NPM).
    sudo chmod -R u=rwX,g=rX,o= /web/TurboTables
    ```
    The service user (`www-data`) only needs read access.
-3. Create `/etc/systemd/system/turbotables.service`:
+3. Install the service file and start it:
    ```
-   [Unit]
-   Description=TurboTables demo
-   After=network.target
-
-   [Service]
-   ExecStart=/usr/bin/node /web/TurboTables/app.js
-   WorkingDirectory=/web/TurboTables
-   Restart=always
-   RestartSec=10
-   User=www-data
-   Group=www-data
-   Environment=NODE_ENV=production
-   Environment=PORT=5000
-   Environment=TRUST_PROXY=1
-   SyslogIdentifier=turbotables
-   NoNewPrivileges=true
-   ProtectSystem=strict
-   ProtectHome=true
-   PrivateTmp=true
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-4. Start it and check it:
-   ```
+   sudo cp ~/turbotables.service /etc/systemd/system/turbotables.service
    sudo systemctl daemon-reload
    sudo systemctl enable --now turbotables.service
-   curl -I http://localhost:5000/
+   curl -I http://172.17.0.1:8006/
    sudo journalctl -u turbotables.service -f
    ```
-5. In NPM, point the proxy host at `http://<DebServer1>:5000` and enable SSL. If NPM runs on DebServer1 itself, consider binding the port to localhost only (firewall it), so the app is reachable only through NPM.
+   The log should start with `TurboTables demo listening on 172.17.0.1, port 8006`.
+4. In NPM, the proxy host forwards to `http://172.17.0.1:8006` (scheme `http`), with SSL enabled on the NPM side.
+5. Check it through NPM: browse the demo, and confirm `/api/customer/?page=1&page=2&filterValue=a&filterValue=b` returns JSON and the service is still running afterwards. The journal's access log lines should show real client IPs, not `172.17.0.x`.
 
-For later updates, repeat steps 1–2 and run `sudo systemctl restart turbotables.service`.
+For later updates, repeat steps 1–2 and run `sudo systemctl restart turbotables.service`. When the new version is working, remove the old folder (`sudo rm -rf /web/TurboTables.old`).
 
 ## FAQ
 

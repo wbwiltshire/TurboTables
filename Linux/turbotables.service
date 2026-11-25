@@ -1,0 +1,33 @@
+[Unit]
+Description=Node.js Application: TurboTables demo
+# Listens on the Docker bridge (172.17.0.1), so start after Docker has created it.
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+ExecStart=/usr/bin/node /web/TurboTables/app.js
+User=www-data
+Group=www-data
+WorkingDirectory=/web/TurboTables
+
+# Restart on non-successful exits.
+Restart=always
+# Restart service after 10 seconds, if it crashes
+RestartSec=10
+SyslogIdentifier=TurboTables
+
+Environment=NODE_ENV=production
+# Reachable only from Nginx Proxy Manager (Docker), which forwards to 172.17.0.1:8006
+Environment=HOST=172.17.0.1
+Environment=PORT=8006
+# Requests arrive from the NPM container; trust its X-Forwarded-For so logs show real client IPs
+Environment=TRUST_PROXY=172.17.0.0/16
+
+# Hardening: the app only reads its own files
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

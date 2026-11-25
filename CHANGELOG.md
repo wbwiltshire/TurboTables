@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Demo app
+- `Linux/turbotables.service`: systemd unit for DebServer1 (listens on the Docker bridge `172.17.0.1:8006` for Nginx Proxy Manager).
+- New `HOST` setting to choose the listen address.
+- Fixed `TRUST_PROXY` with a subnet (e.g. `172.17.0.0/16`), which was read as the number 172.
+- Linux files are kept with LF line endings.
+
 ## 1.0.0 - 2026-11-25
 
 ### Breaking changes
